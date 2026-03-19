@@ -8,6 +8,9 @@ from flask import send_from_directory
 from werkzeug.utils import secure_filename
 from flask import send_from_directory, abort
 
+import logging
+import sys
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # replace with a fixed key in production
@@ -93,10 +96,14 @@ def inject_church_name():
 
 @app.route('/')
 def home():
-    if 'member_id' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
+    try:
+        if 'member_id' in session:
+            return redirect(url_for('dashboard'))
+        return render_template('login.html')
+    except Exception as e:
+        logging.exception("Error in home route")
+        return "Internal Server Error", 500
+    
 @app.route('/login', methods=['POST'])
 def login():
     member_id_input = request.form.get('member_id', '').strip()
