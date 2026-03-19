@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block page_title %}Resource Library{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+    }
+    .page-header p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0.3rem 0 0 0;
+        position: relative;
+    }
+    .btn-header {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border-radius: 28px;
+        padding: 1.8rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: box-shadow 0.3s;
+    }
+    .filter-bar:hover {
+        box-shadow: var(--shadow-md);
+    }
+    .filter-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .filter-select, .filter-input {
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: 0.2s;
+        width: 100%;
+    }
+    .filter-select:focus, .filter-input:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(31,79,163,0.15);
+    }
+    .btn-filter {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 0.7rem 1.8rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn-filter:hover {
+        background: #0d2b5c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(31,79,163,0.3);
+    }
+
+    /* Resource Grid */
+    .resource-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.8rem;
+        margin-top: 1rem;
+    }
+
+    .resource-card {
+        background: white;
+        border-radius: 28px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .resource-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+
+    .resource-header {
+        padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .file-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 20px;
+        background: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        transition: 0.2s;
+    }
+    .resource-card:hover .file-icon {
+        background: var(--primary);
+        color: white;
+    }
+    .file-icon.pdf { background: #fee2e2; color: #dc2626; }
+    .file-icon.word { background: #dbeafe; color: #2563eb; }
+    .file-icon.audio { background: #dcfce7; color: #16a34a; }
+    .file-icon.video { background: #e0f2fe; color: #0891b2; }
+    .file-icon.image { background: #fef9c3; color: #ca8a04; }
+    .resource-title {
+        flex: 1;
+    }
+    .resource-title h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 0.2rem 0;
+    }
+    .category-badge {
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 0.2rem 0.8rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .resource-body {
+        padding: 0.5rem 1.5rem 1rem 1.5rem;
+        flex: 1;
+    }
+    .resource-description {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .resource-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f9fafc;
+        padding: 0.8rem 1.5rem;
+        border-top: 1px solid var(--border-light);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .meta-item i {
+        color: var(--primary);
+    }
+
+    .download-btn {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: 40px;
+        padding: 0.6rem 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: 0.2s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+        margin: 1rem 1.5rem 1.5rem 1.5rem;
+    }
+    .download-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(31,79,163,0.2);
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: 32px;
+        padding: 3rem;
+        max-width: 500px;
+        margin: 2rem auto;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #cbd5e1;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+    .empty-state h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 1rem 0;
+    }
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .page-header { padding: 1.5rem; }
+        .page-header h1 { font-size: 1.8rem; }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Enhanced Header -->
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-book-open me-3"></i>Resource Library</h1>
+            <p>Browse and download sermons, studies, and church materials.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-header">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('resource_library') }}">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="filter-label"><i class="fas fa-tag me-1"></i> Category</div>
+                    <select name="category" class="filter-select" onchange="this.form.submit()">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="filter-label"><i class="fas fa-search me-1"></i> Search</div>
+                    <input type="text" name="search" class="filter-input" value="{{ search }}" placeholder="Enter title or description...">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-filter w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resources Grid -->
+    <div class="resource-grid">
+        {% if resources %}
+            {% for r in resources %}
+            <div class="resource-card">
+                <div class="resource-header">
+                    <div class="file-icon 
+                        {% if r.file_type in ['pdf'] %}pdf{% elif r.file_type in ['docx','doc'] %}word{% elif r.file_type in ['mp3'] %}audio{% elif r.file_type in ['mp4'] %}video{% elif r.file_type in ['jpg','png','jpeg'] %}image{% endif %}">
+                        {% if r.file_type in ['pdf'] %}
+                            <i class="fas fa-file-pdf"></i>
+                        {% elif r.file_type in ['docx','doc'] %}
+                            <i class="fas fa-file-word"></i>
+                        {% elif r.file_type in ['mp3'] %}
+                            <i class="fas fa-file-audio"></i>
+                        {% elif r.file_type in ['mp4'] %}
+                            <i class="fas fa-file-video"></i>
+                        {% elif r.file_type in ['jpg','png','jpeg'] %}
+                            <i class="fas fa-file-image"></i>
+                        {% else %}
+                            <i class="fas fa-file-alt"></i>
+                        {% endif %}
+                    </div>
+                    <div class="resource-title">
+                        <h3>{{ r.title }}</h3>
+                        <span class="category-badge">{{ r.category }}</span>
+                    </div>
+                </div>
+                <div class="resource-body">
+                    <p class="resource-description">{{ r.description or 'No description provided.' }}</p>
+                </div>
+                <div class="resource-meta">
+                    <span class="meta-item"><i class="fas fa-calendar-alt"></i> {{ r.created_at[:10] }}</span>
+                    <span class="meta-item"><i class="fas fa-download"></i> {{ r.download_count }}</span>
+                    <span class="meta-item"><i class="fas fa-hdd"></i> {{ (r.file_size / 1024)|round|int }} KB</span>
+                </div>
+                <a href="{{ url_for('download_resource', resource_id=r.id) }}" class="download-btn">
+                    <i class="fas fa-download me-1"></i> Download
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-book-open empty-state-icon"></i>
+                <h3>No Resources Found</h3>
+                <p>We couldn't find any materials matching your criteria. Try adjusting your filters or check back later.</p>
+                <a href="{{ url_for('resource_library') }}" class="btn btn-outline-primary rounded-pill px-5 py-2">
+                    <i class="fas fa-redo-alt me-2"></i> Reset Filters
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

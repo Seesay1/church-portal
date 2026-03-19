@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block page_title %}Contributions{% endblock %}
+{% block content %}
+<style>
+    /* ===== MODERN GIVING HISTORY STYLES ===== */
+    .giving-header {
+        background: linear-gradient(135deg, #1f4fa3 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        overflow: hidden; /* ensures child animations stay inside */
+    }
+
+    /* Left column (animated) */
+    .header-left {
+        position: relative;
+        padding: 2rem 2.5rem;
+        overflow: hidden;
+        z-index: 1;
+    }
+    .header-left::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 45s linear infinite;
+        z-index: -1;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .header-left p {
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    .header-left h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    /* Right column (static button) */
+    .header-right {
+        padding: 2rem 2.5rem;
+        text-align: right;
+    }
+    .header-right .btn-light {
+        background: white;
+        color: #1f4fa3;
+        border: none;
+        border-radius: 40px;
+        padding: 0.7rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+    }
+    .header-right .btn-light:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Total Card (glass effect) */
+    .total-card {
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        padding: 1.5rem 2rem;
+        border: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+    }
+    .total-card .total-label {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        opacity: 0.8;
+        color: white;
+    }
+    .total-card .total-amount {
+        font-size: 2.8rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: white;
+    }
+    .total-card .total-icon {
+        font-size: 4rem;
+        opacity: 0.2;
+        color: white;
+    }
+
+    /* History Table Card */
+    .history-card {
+        background: white;
+        border-radius: 28px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        overflow: hidden;
+        border: 1px solid #edf2f7;
+        transition: box-shadow 0.3s;
+    }
+    .history-card:hover {
+        box-shadow: 0 25px 50px -12px rgba(31,79,163,0.15);
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .history-table th {
+        background: #f8fafd;
+        padding: 1.2rem 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #475569;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: left;
+    }
+    .history-table td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid #edf2f7;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+    .history-table tr:last-child td {
+        border-bottom: none;
+    }
+    .history-table tbody tr {
+        transition: background 0.2s;
+    }
+    .history-table tbody tr:hover {
+        background: #f8fafd;
+    }
+
+    .date-cell {
+        font-weight: 600;
+        color: #1f4fa3;
+    }
+    .amount-cell {
+        font-weight: 700;
+        color: #0d2b5c;
+        text-align: right;
+    }
+    .badge-description {
+        background: #eef2ff;
+        color: #1f4fa3;
+        padding: 0.4rem 1.2rem;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: white;
+        border-radius: 32px;
+        padding: 3rem;
+        max-width: 450px;
+        margin: 3rem auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.02);
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #cbd5e1;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+    .empty-state h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 1rem 0;
+    }
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header-left h1 { font-size: 2rem; }
+        .total-card .total-amount { font-size: 2rem; }
+        .history-table th,
+        .history-table td { padding: 1rem; }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header with separated animated left and static right -->
+    <div class="giving-header">
+        <div class="row g-0">
+            <div class="col-md-8">
+                <div class="header-left">
+                    <p class="text-uppercase small fw-bold"><i class="fas fa-hand-holding-heart me-2"></i>Your Generosity</p>
+                    <h1>GH₵ {{ "{:,.2f}".format(contributions|sum(attribute='amount')) }}</h1>
+                    <div class="total-card">
+                        <div>
+                            <div class="total-label">Lifetime Contributions</div>
+                            <div class="total-amount">GH₵ {{ "{:,.2f}".format(contributions|sum(attribute='amount')) }}</div>
+                        </div>
+                        <div class="total-icon">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="header-right">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light rounded-pill px-5 py-2">
+                        <i class="fas fa-arrow-left me-2"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Table Card -->
+    {% if contributions %}
+    <div class="history-card">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th><i class="far fa-calendar-alt me-2"></i>Date</th>
+                    <th><i class="fas fa-tag me-2"></i>Description</th>
+                    <th class="text-end pe-4"><i class="fas fa-coins me-2"></i>Amount (GH₵)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contributions %}
+                <tr>
+                    <td class="date-cell">{{ c.date }}</td>
+                    <td>
+                        <span class="badge-description">{{ c.description }}</span>
+                    </td>
+                    <td class="amount-cell">{{ "{:,.2f}".format(c.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <i class="fas fa-coins empty-state-icon"></i>
+        <h3>No Giving History</h3>
+        <p class="text-muted">Your contributions will appear here once you've made a donation.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary rounded-pill px-5 py-2 mt-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

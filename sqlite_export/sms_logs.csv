@@ -1,0 +1,7 @@
+id,phone,message,status,date_sent
+8,0249102912,Reminder: {event} is on {date}. Don't miss it!,Sent,2026-03-16 16:08:19
+9,0241151824,Reminder: {event} is on {date}. Don't miss it!,Sent,2026-03-16 16:08:19
+10,0241151824,Happy Birthday in advance! May God bless you abundantly.,Sent,2026-03-16 16:19:04
+11,0241151824,"Happy Birthday in advance! May God bless you abundantly, Evelyn Amoakowaa.","Failed: 422 - {""code"":""112"",""message"":""Sender ID should be less ",2026-03-16 16:27:08
+12,0241151824,"Happy Birthday in advance! May God bless you abundantly, Evelyn Amoakowaa.","Failed: 422 - {""code"":""112"",""message"":""Sender ID should be less ",2026-03-16 16:33:55
+13,0241151824,"Happy Birthday in advance! May God bless you abundantly, Evelyn Amoakowaa.",Sent,2026-03-16 16:34:42

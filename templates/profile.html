@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block page_title %}Member Profile{% endblock %}
+{% block content %}
+<style>
+    /* Modern Profile Page Styling */
+    .profile-cover {
+        background: linear-gradient(135deg, #1f4fa3 0%, #0d2b5c 100%);
+        height: 120px;
+        border-radius: 20px 20px 0 0;
+        margin-bottom: -60px;
+    }
+    .profile-avatar {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: -60px;
+    }
+    .avatar-wrapper {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: white;
+        padding: 5px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    .profile-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid white;
+    }
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #e9ecef, #ced4da);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 600;
+        color: #1f4fa3;
+        border: 3px solid white;
+    }
+    .profile-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-top: 1rem;
+    }
+    .profile-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.35rem 1rem;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+        margin: 0.5rem 0;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        border: 1px solid #f1f3f5;
+        transition: all 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(31,79,163,0.1);
+        border-color: #1f4fa3;
+    }
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: #e8f0fe;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1f4fa3;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+    .info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.8rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        height: 100%;
+        border: 1px solid rgba(0,0,0,0.02);
+        transition: 0.2s;
+    }
+    .info-card:hover {
+        box-shadow: 0 15px 40px rgba(31,79,163,0.1);
+    }
+    .info-card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f4fa3;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0.8rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px dashed #f1f5f9;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .info-value {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .btn-pcg {
+        background: #1f4fa3;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.8rem;
+        border-radius: 40px;
+        font-weight: 500;
+        transition: 0.2s;
+    }
+    .btn-pcg:hover {
+        background: #163a7a;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(31,79,163,0.3);
+        color: white;
+    }
+    .btn-outline-pcg {
+        border: 1px solid #1f4fa3;
+        color: #1f4fa3;
+        border-radius: 40px;
+        padding: 0.6rem 1.8rem;
+        font-weight: 500;
+        background: transparent;
+        transition: 0.2s;
+    }
+    .btn-outline-pcg:hover {
+        background: #1f4fa3;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(31,79,163,0.2);
+    }
+    .photo-upload-link {
+        color: #1f4fa3;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+    .photo-upload-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Cover & Avatar Section -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="profile-cover"></div>
+        <div class="profile-avatar">
+            <div class="avatar-wrapper">
+                {% if member.photo and member.photo != '' %}
+                    <img src="{{ url_for('member_photo', filename=member.photo.split('\\')[-1].split('/')[-1]) }}" 
+                         class="profile-img" alt="{{ member.full_name }}">
+                {% else %}
+                    <div class="avatar-placeholder">{{ member.full_name[0] }}</div>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('upload_photo') }}" class="photo-upload-link">
+                <i class="fas fa-camera me-1"></i>Update Photo
+            </a>
+            <h2 class="profile-name">{{ member.full_name }}</h2>
+            <div class="d-flex flex-wrap gap-3 align-items-center justify-content-center">
+                <span class="profile-badge"><i class="fas fa-id-card me-1"></i>{{ member.member_id }}</span>
+                <span class="profile-badge"><i class="fas fa-church me-1"></i>{{ member.branch_name }}</span>
+            </div>
+            <div class="d-flex gap-3 mt-3">
+                <a href="{{ url_for('profile_edit') }}" class="btn btn-pcg">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-pcg">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats (optional – you can add attendance/contributions if available) -->
+        <div class="row g-3 px-4 pb-4 mt-4">
+            <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center">
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div>
+                        <div class="text-muted small">Attendance</div>
+                        <div class="fw-bold fs-4">{{ attendance_count|default('0') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center">
+                    <div class="stat-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                    <div>
+                        <div class="text-muted small">Contributions</div>
+                        <div class="fw-bold fs-4">GH₵ {{ total_contrib|default('0.00') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div>
+                        <div class="text-muted small">Family Links</div>
+                        <div class="fw-bold fs-4">{{ family_count|default('0') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Cards -->
+        <div class="row g-4 px-4 pb-5">
+            <!-- Personal Details -->
+            <div class="col-lg-4">
+                <div class="info-card">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-user-circle"></i> Personal Details
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">Gender</span>
+                        <span class="info-value">{{ member.gender or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Marital Status</span>
+                        <span class="info-value">{{ member.marital_status or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Occupation</span>
+                        <span class="info-value">{{ member.occupation or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Address</span>
+                        <span class="info-value">{{ member.address or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Parent/Guardian</span>
+                        <span class="info-value">{{ member.parent_name or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Ministry & Groups -->
+            <div class="col-lg-4">
+                <div class="info-card">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-church"></i> Ministry & Groups
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">Group</span>
+                        <span class="info-value">{{ member.group_name or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Department</span>
+                        <span class="info-value">{{ member.dept_name or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Baptism Date</span>
+                        <span class="info-value">{{ member.baptism_date or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date Joined</span>
+                        <span class="info-value">{{ member.date_joined or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Contact Information -->
+            <div class="col-lg-4">
+                <div class="info-card">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-address-card"></i> Contact Information
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">Phone</span>
+                        <span class="info-value">
+                            {% if member.phone %}
+                                <a href="tel:{{ member.phone }}" class="text-decoration-none">{{ member.phone }}</a>
+                            {% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">
+                            {% if member.email %}
+                                <a href="mailto:{{ member.email }}" class="text-decoration-none">{{ member.email }}</a>
+                            {% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Next of Kin</span>
+                        <span class="info-value">{{ member.parent_name or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">School/Class</span>
+                        <span class="info-value">{{ member.school_class or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

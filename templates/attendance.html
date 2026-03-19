@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block page_title %}Attendance{% endblock %}
+{% block content %}
+<style>
+    /* ===== MODERN ATTENDANCE STYLES ===== */
+    .attendance-header {
+        background: linear-gradient(135deg, #1f4fa3 0%, #0d2b5c 100%);
+        border-radius: 24px;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        overflow: hidden; /* Ensures child animations stay inside */
+    }
+
+    /* Left animated column */
+    .header-left {
+        position: relative;
+        padding: 2rem 2.5rem;
+        overflow: hidden;
+        z-index: 1;
+    }
+    .header-left::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+        z-index: -1;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .header-left h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.3rem;
+        position: relative;
+    }
+    .header-left p {
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 0;
+        position: relative;
+    }
+
+    /* Right column (button) – no animation */
+    .header-right {
+        padding: 2rem 2.5rem;
+        text-align: right;
+    }
+    .header-right .btn-light {
+        background: white;
+        color: #1f4fa3;
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+    }
+    .header-right .btn-light:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Stats Card (inside left column) */
+    .stats-card {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-top: 1rem;
+    }
+    .stats-card .stat {
+        text-align: center;
+        min-width: 80px;
+    }
+    .stats-card .stat .label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.8;
+        color: white;
+    }
+    .stats-card .stat .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: white;
+    }
+    .stats-card .divider {
+        width: 1px;
+        height: 40px;
+        background: rgba(255,255,255,0.3);
+    }
+
+    /* Attendance Grid */
+    .attendance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    .attendance-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        border: 1px solid #eef2f6;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .attendance-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(31,79,163,0.1);
+        border-color: #1f4fa3;
+    }
+    .attendance-card:hover .card-icon {
+        background: #1f4fa3;
+        color: white;
+    }
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        background: #eef2ff;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1f4fa3;
+        font-size: 1.5rem;
+        transition: 0.2s;
+    }
+    .card-content {
+        flex: 1;
+    }
+    .card-day {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+    .card-month {
+        font-size: 0.85rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .card-date {
+        font-size: 0.85rem;
+        color: #1f4fa3;
+        font-weight: 500;
+    }
+
+    /* Empty state */
+    .empty-state {
+        background: white;
+        border-radius: 32px;
+        padding: 3rem;
+        max-width: 500px;
+        margin: 3rem auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #e2e8f0;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+    .empty-state h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 1rem 0;
+    }
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header with separated left (animated) and right (static) -->
+    <div class="attendance-header">
+        <div class="row g-0">
+            <div class="col-md-8">
+                <div class="header-left">
+                    <h1><i class="fas fa-calendar-check me-3"></i>Attendance History</h1>
+                    <p class="mb-3">Your journey of faithfulness – every service counts.</p>
+
+                    <!-- Stats Card (optional) -->
+                    {% if attendance_dates %}
+                    <div class="stats-card">
+                        <div class="stat">
+                            <div class="label">Total</div>
+                            <div class="value">{{ attendance_dates|length }}</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="label">Streak</div>
+                            <div class="value">{{ streak|default(0) }}</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="label">This Month</div>
+                            <div class="value">{{ this_month|default(0) }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="header-right">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light rounded-pill px-5 py-2">
+                        <i class="fas fa-arrow-left me-2"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if attendance_dates %}
+        <!-- Attendance Grid -->
+        <div class="attendance-grid">
+            {% for date in attendance_dates %}
+                {% set day = date.split('-')[2]|int %}
+                {% set month = date.split('-')[1]|int %}
+                {% set year = date.split('-')[0] %}
+                {% set month_name = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1] %}
+                <div class="attendance-card">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-day">{{ day }}</div>
+                        <div class="card-month">{{ month_name }} {{ year }}</div>
+                        <div class="card-date">{{ date }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-calendar-times empty-state-icon"></i>
+            <h3>No Attendance Found</h3>
+            <p>Attendance is updated weekly following the Sunday service. Check back after you've attended a service.</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary rounded-pill px-5 py-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

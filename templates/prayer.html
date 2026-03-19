@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block page_title %}Prayer Requests{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+    }
+    .page-header p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0.3rem 0 0 0;
+        position: relative;
+    }
+    .btn-header {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 28px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        padding: 2rem;
+        transition: box-shadow 0.3s;
+    }
+    .form-card:hover {
+        box-shadow: var(--shadow-hover);
+    }
+    .form-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--primary-light);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1.8rem;
+    }
+    .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .form-control-custom {
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        padding: 1rem;
+        font-size: 1rem;
+        transition: 0.2s;
+        background: var(--bg-light);
+        width: 100%;
+    }
+    .form-control-custom:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(31,79,163,0.15);
+        background: white;
+    }
+    .custom-switch {
+        background: var(--bg-light);
+        border-radius: 20px;
+        padding: 1.2rem 1.5rem;
+        border: 1px solid var(--border-light);
+    }
+    .custom-switch .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    .btn-submit {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 40px;
+        padding: 1rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .btn-submit:hover {
+        background: #0d2b5c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(31,79,163,0.3);
+    }
+
+    /* Prayer Wall */
+    .prayer-wall {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    .prayer-wall::-webkit-scrollbar {
+        width: 6px;
+    }
+    .prayer-wall::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+    .prayer-wall::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    .prayer-wall::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .prayer-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: all 0.2s;
+        margin-bottom: 1rem;
+        padding: 1.5rem;
+    }
+    .prayer-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+    .prayer-text {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+        font-style: italic;
+    }
+    .prayer-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .prayer-author {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .author-avatar {
+        width: 36px;
+        height: 36px;
+        background: var(--primary-soft);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 0.9rem;
+    }
+    .author-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+    }
+    .prayer-datetime {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .prayer-datetime i {
+        margin-right: 2px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        background: white;
+        border-radius: 28px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: var(--shadow-md);
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #cbd5e1;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+
+    @media (max-width: 992px) {
+        .page-header { padding: 1.5rem; }
+        .page-header h1 { font-size: 1.8rem; }
+        .prayer-meta { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-hands-praying me-3"></i>Prayer Requests</h1>
+            <p>Share your heart with us – your request will be lifted in prayer.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-header">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left: Form Column -->
+        <div class="col-lg-5">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="form-card">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="form-icon me-3">
+                            <i class="fas fa-feather-alt"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0">Write Your Request</h4>
+                    </div>
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="request" class="form-label">How can we pray for you?</label>
+                            <textarea class="form-control-custom" id="request" name="request" rows="5" placeholder="e.g., healing for a loved one, guidance, peace..." required></textarea>
+                        </div>
+                        <div class="mb-4 custom-switch">
+                            <div class="form-check form-switch d-flex align-items-center">
+                                <input class="form-check-input me-3" type="checkbox" id="is_public" name="is_public" checked style="transform: scale(1.2);">
+                                <div>
+                                    <label class="form-check-label fw-semibold" for="is_public">Share with the Church Community</label>
+                                    <small class="d-block text-muted mt-1">Uncheck to send privately to the Pastor only.</small>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-praying-hands"></i> Submit Prayer Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Prayer Wall -->
+        <div class="col-lg-7">
+            <h4 class="fw-bold mb-4 d-flex align-items-center">
+                <i class="fas fa-church me-2 text-primary"></i> Community Prayer Wall
+            </h4>
+            <div class="prayer-wall">
+                {% if requests %}
+                    {% for req in requests %}
+                    <div class="prayer-card">
+                        <p class="prayer-text">“{{ req.request }}”</p>
+                        <div class="prayer-meta">
+                            <div class="prayer-author">
+                                <div class="author-avatar">
+                                    {{ req.member[:1]|upper }}
+                                </div>
+                                <span class="author-name">{{ req.member }}</span>
+                            </div>
+                            <span class="prayer-datetime">
+                                <i class="far fa-calendar-alt"></i> {{ req.date }}
+                                <i class="far fa-clock ms-2"></i> {{ req.time }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-dove empty-state-icon"></i>
+                        <h3 class="mt-3">The prayer wall is quiet</h3>
+                        <p class="text-muted">Be the first to share a prayer request with the community.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Custom styling for enhanced profile edit */
+    .profile-edit-header {
+        background: linear-gradient(135deg, #1f4fa3 0%, #0d2b5c 100%);
+        border-radius: 20px 20px 0 0;
+        padding: 2rem;
+        color: white;
+    }
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        border: 3px solid white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f4fa3;
+        border-left: 4px solid #1f4fa3;
+        padding-left: 1rem;
+        margin: 1.5rem 0 1rem 0;
+    }
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+        background-color: #f8fafc;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #1f4fa3;
+        box-shadow: 0 0 0 3px rgba(31,79,163,0.15);
+        background-color: white;
+    }
+    .input-group-text {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px 0 0 12px;
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+    .form-check-input:checked {
+        background-color: #1f4fa3;
+        border-color: #1f4fa3;
+    }
+    .btn-pcg {
+        background: #1f4fa3;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 40px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    .btn-pcg:hover {
+        background: #163a7a;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(31,79,163,0.2);
+        color: white;
+    }
+    .btn-outline-secondary {
+        border-radius: 40px;
+        padding: 0.75rem 2rem;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    .btn-outline-secondary:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    .field-icon {
+        color: #1f4fa3;
+        margin-right: 0.5rem;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header Card -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="profile-edit-header">
+            <div class="d-flex align-items-center">
+                <div class="profile-avatar me-4">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-1">Edit Your Profile</h2>
+                    <p class="mb-0 opacity-75">Update your personal information – it helps us serve you better.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-lg-5">
+            <!-- Flash messages (if any) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show rounded-4" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post">
+                <!-- Contact Information Section -->
+                <h5 class="section-title">
+                    <i class="fas fa-address-card field-icon"></i>Contact Information
+                </h5>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ member.phone or '' }}" placeholder="e.g., 024 XXX XXXX">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ member.email or '' }}" placeholder="name@example.com">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label for="address" class="form-label">Residential Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                            <input type="text" class="form-control" id="address" name="address" 
+                                   value="{{ member.address or '' }}" placeholder="Street, city, etc.">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal & Work Section -->
+                <h5 class="section-title">
+                    <i class="fas fa-briefcase field-icon"></i>Personal & Work
+                </h5>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label for="occupation" class="form-label">Occupation</label>
+                        <input type="text" class="form-control" id="occupation" name="occupation" 
+                               value="{{ member.occupation or '' }}" placeholder="Your profession">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="marital_status" class="form-label">Marital Status</label>
+                        <select class="form-select" id="marital_status" name="marital_status">
+                            <option value="" {% if not member.marital_status %}selected{% endif %}>Select...</option>
+                            <option value="Single" {% if member.marital_status == 'Single' %}selected{% endif %}>Single</option>
+                            <option value="Married" {% if member.marital_status == 'Married' %}selected{% endif %}>Married</option>
+                            <option value="Divorced" {% if member.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
+                            <option value="Widowed" {% if member.marital_status == 'Widowed' %}selected{% endif %}>Widowed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="parent_name" class="form-label">Next of Kin / Parent</label>
+                        <input type="text" class="form-control" id="parent_name" name="parent_name" 
+                               value="{{ member.parent_name or '' }}" placeholder="Full name">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="school_class" class="form-label">School / Class (if student)</label>
+                        <input type="text" class="form-control" id="school_class" name="school_class" 
+                               value="{{ member.school_class or '' }}" placeholder="e.g., JHS 2">
+                    </div>
+                </div>
+
+                <!-- Directory Opt‑in (already included, but we can style it) -->
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="directory_opt_in" name="directory_opt_in" 
+                           {% if member.directory_opt_in %}checked{% endif %}>
+                    <label class="form-check-label" for="directory_opt_in">
+                        <i class="fas fa-users text-primary me-1"></i> 
+                        <strong>Include me in the member directory</strong> – other members can see my name, phone, and email.
+                    </label>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex flex-wrap gap-3 justify-content-end">
+                    <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary px-5 py-2">Cancel</a>
+                    <button type="submit" class="btn btn-pcg px-5 py-2">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

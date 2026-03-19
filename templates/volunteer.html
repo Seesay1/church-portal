@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block page_title %}Volunteer Opportunities{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-light);
+        margin: 0;
+        padding: 0;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 24px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: var(--shadow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .page-header p {
+        font-size: 1rem;
+        margin: 0.3rem 0;
+    }
+
+    .opportunity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .opportunity-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        transition: transform 0.3s;
+        overflow: hidden;
+    }
+
+    .opportunity-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        padding: 1.2rem;
+        background: var(--primary-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .description {
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .action-btn {
+        display: block;
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        text-align: center;
+    }
+
+    .btn-signup {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-signup:hover {
+        background: #0d2b5c;
+    }
+
+    .btn-cancel {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .btn-cancel:hover {
+        background: #fecaca;
+    }
+
+    .btn-full {
+        background: #e2e8f0;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-hands-helping me-3"></i>Volunteer Opportunities</h1>
+            <p>Serve the church – find and sign up for upcoming needs.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-header">
+            <i class="fas fa-arrow-left me-2"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="opportunity-grid">
+        {% if opportunities %}
+            {% for opp in opportunities %}
+            <div class="opportunity-card">
+                <div class="card-header">
+                    <h3>{{ opp.title }}</h3>
+                    {% if opp.role %}
+                    <span class="role-badge">{{ opp.role }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if opp.description %}
+                    <p class="description">{{ opp.description }}</p>
+                    {% endif %}
+                    <div class="details">
+                        <div><i class="fas fa-calendar-alt"></i> {{ opp.date }}</div>
+                        <div><i class="far fa-clock"></i> {{ opp.start_time or 'TBA' }}
+                            {% if opp.end_time %} – {{ opp.end_time }} {% endif %}
+                        </div>
+                        <div><i class="fas fa-map-marker-alt"></i> {{ opp.location or 'TBA' }}</div>
+                        <div><i class="fas fa-users"></i> Spots: {{ opp.registered_count }}
+                            {% if opp.capacity %} / {{ opp.capacity }} {% endif %}
+                        </div>
+                    </div>
+                    {% if opp.capacity %}
+                    <div class="capacity-bar">
+                        <div class="capacity-fill" style="width: {{ (opp.registered_count / opp.capacity * 100) | round }}%;"></div>
+                    </div>
+                    {% endif %}
+                    {% if opp.signed_up %}
+                        <a href="{{ url_for('volunteer_cancel', signup_id=opp.id) }}" class="action-btn btn-cancel"
+                           onclick="return confirm('Cancel your signup?');">
+                            <i class="fas fa-times-circle"></i> Cancel Signup
+                        </a>
+                    {% else %}
+                        {% if opp.spots_left == 0 %}
+                            <span class="action-btn btn-full">Full</span>
+                        {% else %}
+                            <a href="{{ url_for('volunteer_signup', opp_id=opp.id) }}" class="action-btn btn-signup">
+                                <i class="fas fa-calendar-plus"></i> Sign Up
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times fa-4x text-muted opacity-50 mb-3"></i>
+                <h4>No volunteer opportunities right now</h4>
+                <p class="text-muted">Check back later – there's always a way to serve!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

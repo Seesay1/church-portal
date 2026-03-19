@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block page_title %}Change PIN{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+    }
+    .page-header p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0.3rem 0 0 0;
+        position: relative;
+    }
+    .btn-header {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 28px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        padding: 2rem;
+        max-width: 500px;
+        margin: 0 auto;
+        transition: box-shadow 0.3s;
+    }
+    .form-card:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .form-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--primary-light);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1.8rem;
+    }
+    .form-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: block;
+    }
+    .input-group-custom {
+        position: relative;
+    }
+    .input-group-custom i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        z-index: 2;
+    }
+    .form-control-custom {
+        width: 100%;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1rem 1rem 1rem 3rem;
+        font-size: 1rem;
+        transition: 0.2s;
+        background: var(--bg-light);
+        font-family: 'Inter', sans-serif;
+    }
+    .form-control-custom:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(31,79,163,0.15);
+        background: white;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.1rem;
+        z-index: 2;
+    }
+    .password-toggle:hover {
+        color: var(--primary);
+    }
+
+    .strength-meter {
+        margin-top: 0.5rem;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .strength-meter-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--accent);
+        transition: width 0.3s, background 0.3s;
+    }
+    .strength-text {
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+        color: var(--text-muted);
+    }
+
+    .btn-submit {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 40px;
+        padding: 1rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    .btn-submit:hover {
+        background: #0d2b5c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(31,79,163,0.3);
+    }
+
+    .info-note {
+        background: var(--primary-light);
+        border-radius: 16px;
+        padding: 0.8rem 1.2rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .info-note i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    @media (max-width: 576px) {
+        .page-header { padding: 1.5rem; }
+        .page-header h1 { font-size: 1.8rem; }
+        .form-card { padding: 1.5rem; }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-key me-3"></i>Change PIN</h1>
+            <p>Update your 4‑digit access code securely.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-header">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <div class="form-header">
+            <div class="form-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>Enter New PIN</h2>
+        </div>
+
+        <!-- Flash messages (if any) – already displayed in base, but we can also show inline -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show rounded-4 mb-4" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('change_pin') }}" id="pinForm">
+            <!-- Current PIN -->
+            <div class="form-group">
+                <label for="current_pin" class="form-label">Current PIN</label>
+                <div class="input-group-custom">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="form-control-custom" id="current_pin" name="current_pin" 
+                           placeholder="••••" maxlength="4" pattern="\d{4}" inputmode="numeric" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('current_pin', this)">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- New PIN -->
+            <div class="form-group">
+                <label for="new_pin" class="form-label">New PIN (4 digits)</label>
+                <div class="input-group-custom">
+                    <i class="fas fa-lock-open"></i>
+                    <input type="password" class="form-control-custom" id="new_pin" name="new_pin" 
+                           placeholder="••••" maxlength="4" pattern="\d{4}" inputmode="numeric" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('new_pin', this)">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+                <!-- Strength meter (optional) -->
+                <div class="strength-meter" id="strengthMeter">
+                    <div class="strength-meter-fill" id="strengthFill"></div>
+                </div>
+                <div class="strength-text" id="strengthText">Enter 4 digits</div>
+            </div>
+
+            <!-- Confirm PIN -->
+            <div class="form-group">
+                <label for="confirm_pin" class="form-label">Confirm New PIN</label>
+                <div class="input-group-custom">
+                    <i class="fas fa-check-circle"></i>
+                    <input type="password" class="form-control-custom" id="confirm_pin" name="confirm_pin" 
+                           placeholder="••••" maxlength="4" pattern="\d{4}" inputmode="numeric" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_pin', this)">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+                <div id="matchMessage" class="small mt-1" style="color: var(--accent);"></div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="fas fa-save"></i> Update PIN
+            </button>
+        </form>
+
+        <!-- Security Note -->
+        <div class="info-note">
+            <i class="fas fa-shield-virus"></i>
+            <span>Your PIN is hashed and never stored in plain text. Choose a code you can remember but others cannot guess.</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password visibility toggle
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Simple strength meter for numeric PIN (based on variety)
+    function checkStrength(pin) {
+        if (pin.length === 0) return { width: 0, text: 'Enter 4 digits', color: '#dc2626' };
+        const digits = pin.split('');
+        const unique = new Set(digits).size;
+        if (unique === 1) return { width: 25, text: 'Very weak (repetitive)', color: '#dc2626' };
+        if (unique <= 2) return { width: 50, text: 'Weak', color: '#f59e0b' };
+        if (unique === 3) return { width: 75, text: 'Good', color: '#10b981' };
+        return { width: 100, text: 'Strong', color: '#10b981' };
+    }
+
+    // Real‑time validation
+    const newPin = document.getElementById('new_pin');
+    const confirmPin = document.getElementById('confirm_pin');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    const matchMessage = document.getElementById('matchMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function updateStrength() {
+        const pin = newPin.value;
+        const strength = checkStrength(pin);
+        strengthFill.style.width = strength.width + '%';
+        strengthFill.style.backgroundColor = strength.color;
+        strengthText.textContent = strength.text;
+        strengthText.style.color = strength.color;
+    }
+
+    function checkMatch() {
+        const newVal = newPin.value;
+        const confirmVal = confirmPin.value;
+        if (confirmVal.length === 0) {
+            matchMessage.textContent = '';
+            return;
+        }
+        if (newVal === confirmVal) {
+            matchMessage.textContent = '✓ PINs match';
+            matchMessage.style.color = '#10b981';
+        } else {
+            matchMessage.textContent = '✗ PINs do not match';
+            matchMessage.style.color = '#dc2626';
+        }
+    }
+
+    newPin.addEventListener('input', function() {
+        updateStrength();
+        checkMatch();
+    });
+    confirmPin.addEventListener('input', checkMatch);
+
+    // Prevent form submission if PINs don't match or not exactly 4 digits
+    document.getElementById('pinForm').addEventListener('submit', function(e) {
+        const newVal = newPin.value;
+        const confirmVal = confirmPin.value;
+        if (newVal !== confirmVal) {
+            e.preventDefault();
+            alert('New PIN and confirmation do not match.');
+        } else if (!/^\d{4}$/.test(newVal)) {
+            e.preventDefault();
+            alert('PIN must be exactly 4 digits.');
+        }
+    });
+</script>
+{% endblock %}

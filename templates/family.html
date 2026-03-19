@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block page_title %}Family Connections{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .header-left h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .btn-back {
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--border-light);
+        border-radius: 40px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+    .btn-back:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    .btn-primary-custom {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 1.8rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-primary-custom:hover {
+        background: #0d2b5c;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        color: white;
+    }
+
+    .family-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.8rem;
+    }
+
+    .family-card {
+        background: white;
+        border-radius: 28px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+    }
+    .family-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+
+    .card-header-custom {
+        padding: 1.5rem 1.8rem 0.5rem 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .card-header-custom i {
+        font-size: 1.8rem;
+        color: var(--primary);
+        background: var(--primary-light);
+        padding: 0.6rem;
+        border-radius: 16px;
+    }
+    .card-header-custom h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .card-header-custom .badge-count {
+        background: var(--primary);
+        color: white;
+        border-radius: 40px;
+        padding: 0.2rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: auto;
+    }
+
+    .card-body-custom {
+        padding: 1.5rem 1.8rem 2rem 1.8rem;
+    }
+
+    /* Family member list */
+    .family-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .family-item {
+        display: flex;
+        align-items: center;
+        padding: 0.8rem 0;
+        border-bottom: 1px dashed var(--border-light);
+        transition: background 0.2s;
+    }
+    .family-item:last-child {
+        border-bottom: none;
+    }
+    .family-item:hover {
+        background: var(--primary-light);
+        border-radius: 16px;
+        padding: 0.8rem 1rem;
+        margin: 0 -1rem;
+    }
+    .family-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(145deg, var(--primary-light), #ffffff);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--primary);
+        margin-right: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+    .family-info {
+        flex: 1;
+    }
+    .family-name {
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.2rem;
+    }
+    .family-relation {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: capitalize;
+        background: var(--bg-light);
+        padding: 0.2rem 0.8rem;
+        border-radius: 40px;
+        display: inline-block;
+    }
+
+    /* Request cards */
+    .request-item {
+        background: #f9fafc;
+        border-radius: 20px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-light);
+        transition: all 0.2s;
+    }
+    .request-item:hover {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+    .request-item.incoming {
+        border-left: 4px solid #10b981;
+    }
+    .request-item.outgoing {
+        border-left: 4px solid #f59e0b;
+    }
+    .request-header {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.8rem;
+    }
+    .request-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-soft);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-weight: 600;
+    }
+    .request-name {
+        font-weight: 700;
+        color: var(--text-dark);
+        flex: 1;
+    }
+    .request-relation {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        background: var(--bg-light);
+        padding: 0.2rem 0.8rem;
+        border-radius: 40px;
+    }
+    .request-actions {
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 0.8rem;
+    }
+    .btn-approve {
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 40px;
+        padding: 0.4rem 1.2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: 0.2s;
+    }
+    .btn-approve:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(16,185,129,0.2);
+    }
+    .btn-decline {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+        border-radius: 40px;
+        padding: 0.4rem 1.2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: 0.2s;
+    }
+    .btn-decline:hover {
+        background: #fecaca;
+        color: #991b1b;
+    }
+
+    .outgoing-status {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+    .spinner-sm {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--primary-light);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 768px) {
+        .family-grid {
+            grid-template-columns: 1fr;
+        }
+        .header-left h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header with back button, title, and action button -->
+    <div class="page-header">
+        <div class="header-left">
+            <a href="{{ url_for('dashboard') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <h1><i class="fas fa-users me-2" style="color: var(--primary);"></i>Family Connections</h1>
+        </div>
+        <a href="{{ url_for('family_add') }}" class="btn-primary-custom">
+            <i class="fas fa-user-plus"></i> Link New Member
+        </a>
+    </div>
+
+    <!-- Family Cards Grid -->
+    <div class="family-grid">
+        <!-- My Family Card -->
+        <div class="family-card">
+            <div class="card-header-custom">
+                <i class="fas fa-heart"></i>
+                <h3>My Family</h3>
+                <span class="badge-count">{{ linked|length }}</span>
+            </div>
+            <div class="card-body-custom">
+                {% if linked %}
+                    <ul class="family-list">
+                        {% for member in linked %}
+                        <li class="family-item">
+                            <div class="family-avatar">
+                                {{ member[1][:2]|upper }}
+                            </div>
+                            <div class="family-info">
+                                <div class="family-name">{{ member[1] }}</div>
+                                <span class="family-relation">{{ member[2] }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No family members linked yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Incoming Requests Card -->
+        <div class="family-card">
+            <div class="card-header-custom">
+                <i class="fas fa-inbox" style="color: #10b981;"></i>
+                <h3>Incoming Requests</h3>
+                <span class="badge-count" style="background: #10b981;">{{ incoming|length }}</span>
+            </div>
+            <div class="card-body-custom">
+                {% if incoming %}
+                    {% for req in incoming %}
+                    <div class="request-item incoming">
+                        <div class="request-header">
+                            <div class="request-avatar">
+                                {{ req[1][:2]|upper }}
+                            </div>
+                            <span class="request-name">{{ req[1] }}</span>
+                            <span class="request-relation">{{ req[2] }}</span>
+                        </div>
+                        <div class="request-actions">
+                            <a href="{{ url_for('family_approve', request_id=req[0]) }}" class="btn-approve">
+                                <i class="fas fa-check-circle"></i> Approve
+                            </a>
+                            <a href="{{ url_for('family_reject', request_id=req[0]) }}" class="btn-decline">
+                                <i class="fas fa-times-circle"></i> Decline
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No incoming requests.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pending Sent Card -->
+        <div class="family-card">
+            <div class="card-header-custom">
+                <i class="fas fa-paper-plane" style="color: #f59e0b;"></i>
+                <h3>Pending Sent</h3>
+                <span class="badge-count" style="background: #f59e0b;">{{ outgoing|length }}</span>
+            </div>
+            <div class="card-body-custom">
+                {% if outgoing %}
+                    {% for req in outgoing %}
+                    <div class="request-item outgoing">
+                        <div class="request-header">
+                            <div class="request-avatar">
+                                {{ req[1][:2]|upper }}
+                            </div>
+                            <span class="request-name">{{ req[1] }}</span>
+                            <span class="request-relation">{{ req[2] }}</span>
+                        </div>
+                        <div class="outgoing-status">
+                            <div class="spinner-sm"></div>
+                            <span>Waiting for approval</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-paper-plane"></i>
+                        <p>No outgoing requests.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

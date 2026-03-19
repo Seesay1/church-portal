@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<style>
+    .auth-container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .question-card { background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); border-radius: 32px; }
+</style>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="question-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                <h2 class="fw-bold">Verify Your Identity</h2>
+                <p class="text-muted">Answer your security questions.</p>
+            </div>
+            <form method="post">
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">{{ q1 }}</label>
+                    <input type="text" name="answer1" class="form-control form-control-lg" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">{{ q2 }}</label>
+                    <input type="text" name="answer2" class="form-control form-control-lg" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill">Verify</button>
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <a href="{{ url_for('forgot_pin') }}" class="text-decoration-none">Start Over</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

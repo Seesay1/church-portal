@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* Modern Dashboard Styles */
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #2a73ff;
+        --primary-soft: #e8f0fe;
+        --bg-light: #f8fafc;
+        --bg-dark: #0f172a;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.3);
+        --shadow-sm: 0 10px 15px -3px rgba(0,0,0,0.05);
+        --shadow-md: 0 20px 25px -5px rgba(0,0,0,0.05);
+        --shadow-hover: 0 30px 50px -12px rgba(31,79,163,0.25);
+        --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(145deg, #f5f7fa 0%, #eef2f6 100%);
+        min-height: 100vh;
+        transition: background 0.3s;
+    }
+
+    body.dark-mode {
+        background: #0f172a;
+        --glass-bg: rgba(30, 41, 59, 0.8);
+        --glass-border: rgba(255,255,255,0.1);
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Glass Card */
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+    }
+    .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    /* Welcome Header */
+    .welcome-header {
+        grid-column: span 12;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 1.8rem 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .welcome-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+        background: linear-gradient(145deg, #ffffff30, #ffffff10);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        border: 3px solid rgba(255,255,255,0.3);
+        box-shadow: 0 20px 30px rgba(0,0,0,0.2);
+        animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0px); }
+    }
+    .welcome-text h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, #fff, #e0e7ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .badge-premium {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 40px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+    }
+    .theme-toggle {
+        background: rgba(0,0,0,0.2);
+        border-radius: 40px;
+        padding: 4px;
+        width: 70px;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .theme-toggle span {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        color: white;
+    }
+    .theme-toggle .active {
+        background: white;
+        color: var(--primary);
+    }
+
+    /* Profile Completion */
+    .profile-completion {
+        grid-column: span 12;
+        padding: 1.8rem 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .progress-bar-custom {
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 30px;
+        overflow: hidden;
+        width: 100%;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        border-radius: 30px;
+        width: 0%;
+        transition: width 1s ease;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        grid-column: span 12;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 24px;
+        padding: 1.8rem 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        border: 1px solid rgba(0,0,0,0.02);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.8), transparent 70%);
+        opacity: 0;
+        transition: opacity 0.5s;
+        pointer-events: none;
+    }
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+    .stat-card:hover {
+        transform: scale(1.02);
+        box-shadow: var(--shadow-hover);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        background: rgba(31, 79, 163, 0.1);
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+
+    /* Two-column layout */
+    .activity-column {
+        grid-column: span 7;
+    }
+    .events-column {
+        grid-column: span 5;
+    }
+
+    .activity-item {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
+        border: 1px solid #f0f2f5;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .activity-item:hover {
+        border-color: var(--primary);
+        box-shadow: 0 5px 15px rgba(31,79,163,0.1);
+        transform: translateX(5px);
+    }
+
+    .quick-actions-grid {
+        grid-column: span 12;
+        padding: 1.8rem 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .action-btn {
+        background: white;
+        border-radius: 40px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        border: 1px solid rgba(0,0,0,0.02);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        justify-content: center;
+    }
+    .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(31,79,163,0.3);
+        border-color: transparent;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .activity-column, .events-column {
+            grid-column: span 12;
+        }
+        .welcome-header {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="dashboard-grid">
+    <!-- Welcome Header -->
+    <div class="welcome-header">
+        <div class="d-flex align-items-center gap-4">
+            <div class="welcome-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="welcome-text">
+                <h1>Welcome back, <span class="gradient-text">{{ member.full_name }}</span></h1>
+                <p class="mb-0 opacity-75">
+                    <i class="fas fa-id-card me-2"></i>{{ member.member_id }} · 
+                    <i class="fas fa-calendar-alt me-2"></i>Joined {{ member.date_joined[:10] }}
+                </p>
+            </div>
+        </div>
+        <div class="d-flex gap-3 align-items-center mt-3 mt-lg-0">
+            <div class="theme-toggle" id="themeToggle">
+                <span class="active"><i class="fas fa-sun"></i></span>
+                <span><i class="fas fa-moon"></i></span>
+            </div>
+            <span class="badge-premium">
+                <i class="fas fa-crown me-1"></i> PREMIUM MEMBER
+            </span>
+        </div>
+    </div>
+
+    <!-- Profile Completion Card -->
+    <div class="glass-card profile-completion">
+        <div class="w-100">
+            <h4 class="fw-semibold mb-2"><i class="fas fa-chart-line me-2" style="color:var(--primary);"></i>Profile Completion</h4>
+            <div class="progress-bar-custom mb-2">
+                <div class="progress-fill" style="width: {{ profile_completion }}%;"></div>
+            </div>
+            <p class="text-secondary small mb-0">{{ profile_completion }}% complete · 
+                <a href="{{ url_for('profile_edit') }}" class="text-decoration-none fw-semibold" style="color:var(--primary);">
+                    Complete now <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </p>
+        </div>
+        <span class="badge bg-light text-dark p-3 rounded-4 shadow-sm mt-3 mt-sm-0">
+            <i class="fas fa-trophy me-1" style="color:#ffc107;"></i> Next milestone: Add phone number
+        </span>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-hand-holding-heart"></i></div>
+            <h6 class="text-secondary small text-uppercase">Total Contributions</h6>
+            <h2 class="fw-bold mb-2" style="color:#2c3e50;">GH₵ {{ "%.2f"|format(total_contrib) }}</h2>
+            <div class="d-flex align-items-center text-success small">
+                <i class="fas fa-arrow-up me-1"></i> 12% from last month
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+            <h6 class="text-secondary small text-uppercase">Attendance</h6>
+            <h2 class="fw-bold mb-2">{{ attendance_count }}</h2>
+            <div class="d-flex align-items-center text-info small">
+                <i class="fas fa-clock me-1"></i> Last service: {{ last_attendance_date }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <h6 class="text-secondary small text-uppercase">Family Links</h6>
+            <h2 class="fw-bold mb-2">{{ family_count }}</h2>
+            <div class="d-flex align-items-center text-warning small">
+                <i class="fas fa-user-plus me-1"></i> {{ pending_family }} pending
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+            <h6 class="text-secondary small text-uppercase">Upcoming Events</h6>
+            <h2 class="fw-bold mb-2">{{ upcoming_events|length }}</h2>
+            <div class="d-flex align-items-center text-primary small">
+                <i class="fas fa-arrow-right me-1"></i> Next: {{ next_event_date }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Upcoming Events -->
+    <div class="glass-card activity-column p-4">
+        <h4 class="fw-semibold mb-4"><i class="fas fa-history me-2" style="color:var(--primary);"></i>Recent Activity</h4>
+        <h6 class="text-secondary small fw-bold mb-3"><i class="fas fa-hand-holding-heart me-2"></i>Latest Contributions</h6>
+        {% if recent_contributions %}
+            {% for c in recent_contributions %}
+            <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-coins"></i></div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">{{ c.description or 'Offering' }}</span>
+                        <span class="fw-bold text-success">GH₵ {{ "%.2f"|format(c.amount) }}</span>
+                    </div>
+                    <small class="text-secondary"><i class="far fa-calendar me-1"></i>{{ c.date }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-secondary ps-4">No contributions yet.</p>
+        {% endif %}
+        <h6 class="text-secondary small fw-bold mt-4 mb-3"><i class="fas fa-praying-hands me-2"></i>Recent Prayer Requests</h6>
+        {% if recent_prayers %}
+            {% for p in recent_prayers %}
+            <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-pray"></i></div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">{{ p.request|truncate(50) }}</span>
+                        <small class="text-secondary">{{ p.created_at[:10] }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-secondary ps-4">No prayer requests yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="glass-card events-column p-4 d-flex flex-column">
+        <h4 class="fw-semibold mb-4"><i class="fas fa-calendar-alt me-2" style="color:var(--primary);"></i>Upcoming Events</h4>
+        <div class="flex-grow-1">
+            {% if upcoming_events %}
+                {% for e in upcoming_events[:3] %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: rgba(220,53,69,0.1); color:#dc3545;"><i class="fas fa-calendar-day"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">{{ e.title }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ e.time }}</span>
+                        </div>
+                        <small class="text-secondary"><i class="far fa-calendar me-1"></i>{{ e.date }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if upcoming_events|length > 3 %}
+                <a href="{{ url_for('events') }}" class="text-decoration-none small fw-semibold mt-2 d-block text-center">
+                    View all {{ upcoming_events|length }} events <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-secondary opacity-50 mb-3"></i>
+                    <p class="text-secondary">No upcoming events</p>
+                </div>
+            {% endif %}
+        </div>
+        <hr class="my-4">
+        <h6 class="fw-semibold mb-3"><i class="fas fa-chart-pie me-2" style="color:var(--primary);"></i>Contribution Breakdown</h6>
+        <div class="stacked-bar">
+            <div class="bar-segment" style="width:45%; background:var(--primary);"></div>
+            <div class="bar-segment" style="width:30%; background:var(--primary-light);"></div>
+            <div class="bar-segment" style="width:25%; background:#6c8fd9;"></div>
+        </div>
+        <div class="d-flex justify-content-between small mt-2 text-secondary">
+            <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--primary); margin-right:5px;"></span>Tithe</span>
+            <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--primary-light); margin-right:5px;"></span>Offering</span>
+            <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#6c8fd9; margin-right:5px;"></span>Other</span>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="glass-card quick-actions-grid">
+        <h4 class="fw-semibold mb-3 col-12"><i class="fas fa-bolt me-2" style="color:var(--primary);"></i>Quick Actions</h4>
+        <a href="{{ url_for('profile_edit') }}" class="action-btn"><i class="fas fa-user-edit"></i> Edit Profile</a>
+        <a href="{{ url_for('prayer') }}" class="action-btn"><i class="fas fa-praying-hands"></i> Prayer Request</a>
+        <a href="{{ url_for('events') }}" class="action-btn"><i class="fas fa-calendar-plus"></i> Register for Event</a>
+        <a href="{{ url_for('family_add') }}" class="action-btn"><i class="fas fa-user-plus"></i> Add Family</a>
+        <a href="{{ url_for('change_pin') }}" class="action-btn"><i class="fas fa-key"></i> Change PIN</a>
+        <a href="{{ url_for('resource_library') }}" class="action-btn"><i class="fas fa-book-open"></i> Resource Library</a>
+        <a href="{{ url_for('contributions') }}" class="action-btn"><i class="fas fa-chart-line"></i> Giving History</a>
+        <a href="{{ url_for('logout') }}" class="action-btn" style="background:#fee; color:#c00;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
+
+<script>
+    // Simple theme toggle (add actual dark mode logic if desired)
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            themeToggle.querySelectorAll('span').forEach(s => s.classList.toggle('active'));
+            document.body.classList.toggle('dark-mode');
+        });
+    }
+</script>
+{% endblock %}

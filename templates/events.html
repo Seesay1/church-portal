@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block page_title %}Upcoming Events{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .events-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .events-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .events-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    .events-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+    }
+    .events-header .btn-light {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+    }
+    .events-header .btn-light:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .event-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+        gap: 1.8rem;
+        margin-top: 2rem;
+    }
+
+    .event-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-light);
+        height: 100%;
+        display: flex;
+        position: relative;
+    }
+    .event-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+
+    .event-date-col {
+        width: 120px;
+        background: linear-gradient(145deg, var(--primary), #0d2b5c);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem;
+    }
+    .event-date-day {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .event-date-month {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+        margin-top: 0.2rem;
+    }
+    .event-date-time {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .event-details-col {
+        flex: 1;
+        padding: 1.5rem;
+    }
+
+    .event-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    .event-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-right: 1rem;
+    }
+    .event-badge {
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 0.3rem 1rem;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .event-badge.registered {
+        background: #e6f7e6;
+        color: #10b981;
+    }
+
+    .event-description {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .event-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    .event-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .event-meta-item i {
+        color: var(--primary);
+        width: 16px;
+    }
+
+    .event-actions {
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+    }
+    .btn-event {
+        padding: 0.6rem 1.5rem;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-primary-custom {
+        background: var(--primary);
+        color: white;
+    }
+    .btn-primary-custom:hover {
+        background: #0d2b5c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(31,79,163,0.3);
+    }
+    .btn-outline-custom {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+    }
+    .btn-outline-custom:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .btn-danger-custom {
+        background: #fee;
+        color: #c00;
+        border: 2px solid #fcc;
+    }
+    .btn-danger-custom:hover {
+        background: #fcc;
+        border-color: #c00;
+        color: #a00;
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: 32px;
+        padding: 3rem;
+        max-width: 500px;
+        margin: 2rem auto;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #cbd5e1;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+    .empty-state h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 1rem 0;
+    }
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 576px) {
+        .event-card {
+            flex-direction: column;
+        }
+        .event-date-col {
+            width: 100%;
+            flex-direction: row;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        .event-date-day {
+            font-size: 2rem;
+        }
+        .event-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Enhanced Header -->
+    <div class="events-header d-flex flex-column flex-md-row align-items-center justify-content-between">
+        <div class="mb-3 mb-md-0">
+            <h1><i class="fas fa-calendar-alt me-3"></i>Upcoming Events</h1>
+            <p>Discover and register for upcoming church services and activities.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-light rounded-pill px-5 py-2">
+            <i class="fas fa-arrow-left me-2"></i>Dashboard
+        </a>
+    </div>
+
+    <div class="event-grid">
+        {% if events %}
+            {% for event in events %}
+                {# ----- ROBUST TIME FORMATTING LOGIC ----- #}
+                {# 1. Handle None/Empty values first #}
+                {% if not event.time or event.time == '' %}
+                    {% set display_time = 'TBA' %}
+                {# 2. Check if already formatted (contains AM/PM) #}
+                {% elif event.time is string and ('AM' in event.time|upper or 'PM' in event.time|upper) %}
+                    {% set display_time = event.time %}
+                {# 3. Parse 24h Format (or Python time object) #}
+                {% else %}
+                    {# Force string conversion (|string) to handle Python datetime/time objects safely #}
+                    {% set time_str = event.time|string %}
+                    {% set parts = time_str.split(':') %}
+                    
+                    {% if parts|length >= 2 %}
+                        {% set hour = parts[0]|int %}
+                        {# Get minutes, ensuring no spaces and limiting to 2 chars just in case of seconds #}
+                        {% set minute = parts[1][:2] %}
+                        
+                        {% if hour >= 12 %}
+                            {% set ampm = 'PM' %}
+                            {% if hour > 12 %}
+                                {% set hour = hour - 12 %}
+                            {% endif %}
+                        {% elif hour == 0 %}
+                            {% set hour = 12 %}
+                            {% set ampm = 'AM' %}
+                        {% else %}
+                            {% set ampm = 'AM' %}
+                        {% endif %}
+                        
+                        {% set display_time = hour ~ ':' ~ minute ~ ' ' ~ ampm %}
+                    {% else %}
+                        {# Fallback if format is unexpected #}
+                        {% set display_time = time_str %}
+                    {% endif %}
+                {% endif %}
+
+                {# ----- DATE FORMATTING LOGIC ----- #}
+                {# Using |string to be safe if event.date is a date object #}
+                {% set date_str = event.date|string %}
+                {% set date_parts = date_str.split('-') %}
+                {% set day_val = date_parts[2] if date_parts|length >= 3 else '??' %}
+                {% set month_val = date_parts[1] if date_parts|length >= 2 else '01' %}
+
+                <div class="event-card">
+                    <!-- Date Column -->
+                    <div class="event-date-col">
+                        <div class="event-date-day">{{ day_val }}</div>
+                        <div class="event-date-month">
+                            {% if month_val == '01' %}JAN{% elif month_val == '02' %}FEB{% elif month_val == '03' %}MAR{% elif month_val == '04' %}APR{% elif month_val == '05' %}MAY{% elif month_val == '06' %}JUN{% elif month_val == '07' %}JUL{% elif month_val == '08' %}AUG{% elif month_val == '09' %}SEP{% elif month_val == '10' %}OCT{% elif month_val == '11' %}NOV{% else %}DEC{% endif %}
+                        </div>
+                        <div class="event-date-time">
+                            <i class="far fa-clock"></i> {{ display_time }}
+                        </div>
+                    </div>
+                    <!-- Details Column -->
+                    <div class="event-details-col">
+                        <div class="event-title-row">
+                            <h3 class="event-title">{{ event.title }}</h3>
+                            {% if event.registered %}
+                                <span class="event-badge registered"><i class="fas fa-check-circle me-1"></i>Registered</span>
+                            {% endif %}
+                        </div>
+                        <p class="event-description">{{ event.description or 'Join us for this special service/event.' }}</p>
+                        <div class="event-meta">
+                            <div class="event-meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ event.location or 'TBA' }}</span>
+                            </div>
+                            <div class="event-meta-item">
+                                <i class="far fa-clock"></i>
+                                <span>{{ display_time }}</span>
+                            </div>
+                            {% if event.capacity %}
+                            <div class="event-meta-item">
+                                <i class="fas fa-users"></i>
+                                <span>Capacity: {{ event.capacity }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="event-actions">
+                            {% if event.registered %}
+                                <a href="{{ url_for('cancel_registration', event_id=event.id) }}" class="btn-event btn-danger-custom">
+                                    <i class="fas fa-times-circle"></i> Cancel Registration
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('register_event', event_id=event.id) }}" class="btn-event btn-primary-custom">
+                                    <i class="fas fa-calendar-plus"></i> Register Now
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-alt empty-state-icon"></i>
+                <h3>No Upcoming Events</h3>
+                <p>Check back later for updates on church programs and activities.</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary rounded-pill px-5 py-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

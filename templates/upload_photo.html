@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <div class="text-center mb-4">
+                <div class="p-3 bg-primary-subtle rounded-circle d-inline-block text-primary mb-3">
+                    <i class="fas fa-camera fa-2x"></i>
+                </div>
+                <h4 class="fw-bold">Update Photo</h4>
+                <p class="text-muted small">Choose a clear, professional headshot</p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-zone border-2 border-dashed rounded-4 p-5 text-center mb-4 bg-light position-relative">
+                    <input type="file" id="photo" name="photo" accept="image/*" required 
+                           class="position-absolute opacity-0 w-100 h-100 start-0 top-0" style="cursor: pointer;"
+                           onchange="previewImage(this)">
+                    <div id="previewContainer" style="display: none;">
+                        <img id="imgPreview" class="rounded-circle shadow-sm mb-3" width="120" height="120" style="object-fit: cover;">
+                        <p class="small text-primary fw-bold mb-0">Click to change selection</p>
+                    </div>
+                    <div id="placeholderContainer">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3 opacity-50"></i>
+                        <p class="mb-1 fw-bold text-dark">Drag and drop or click</p>
+                        <p class="small text-muted mb-0">Max size: 2MB (JPG, PNG)</p>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-pcg py-3 shadow-sm">
+                        Upload Profile Photo
+                    </button>
+                    <a href="{{ url_for('profile') }}" class="btn btn-link text-muted text-decoration-none">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imgPreview').src = e.target.result;
+            document.getElementById('previewContainer').style.display = 'block';
+            document.getElementById('placeholderContainer').style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

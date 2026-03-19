@@ -1,0 +1,15 @@
+id,key,value
+1,theme,Dark
+2,primary_color,#6247fa
+3,secondary_color,#d62607
+4,church_name,"PCG, MT. ZION CONGREGATION"
+5,church_address,"POST OFFICE BOX 3, SAMPA"
+6,church_phone,
+7,church_email,
+8,default_bible_verse,
+9,branch_codes,"{
+  ""PCG MOO BRANCH"": ""PCG-MO""
+}"
+129,sms_api_url,https://sms.arkesel.com/sms/api?action=send-sms&api_key=Ojk1R2o3bklOeEdZZzlZNmw=&to=PhoneNumber&from=SenderID&sms=YourMessage
+130,sms_api_key,Ojk1R2o3bklOeEdZZzlZNmw=
+131,sms_sender_id,MT. ZION

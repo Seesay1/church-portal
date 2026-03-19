@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Church Member Portal</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- Custom styles -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+        /* Sidebar (only when logged in) */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            background: linear-gradient(180deg, #1a2b4c 0%, #0e1a2f 100%);
+            color: #fff;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+        }
+        .sidebar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2.5rem;
+            padding-left: 0.5rem;
+            color: #fff;
+            text-decoration: none;
+        }
+        .sidebar .logo i {
+            font-size: 2rem;
+            color: #4a90e2;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 0.9rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .sidebar .nav-link i {
+            width: 24px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            background: #4a90e2;
+            color: white;
+            box-shadow: 0 8px 16px rgba(74,144,226,0.3);
+        }
+        .sidebar .nav-link.logout {
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1.5rem;
+        }
+        /* Main content (only when logged in) */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+            transition: margin-left 0.3s;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1a2b4c;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #4a90e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        /* Auth container (for login page) */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+                padding: 2rem 0.5rem;
+            }
+            .sidebar .logo span {
+                display: none;
+            }
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link i {
+                margin: 0 auto;
+                font-size: 1.5rem;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+        @media (max-width: 576px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: start;
+                gap: 1rem;
+            }
+        }
+        /* Card hover effects */
+        .stat-card {
+            position: relative;
+        }
+        .stat-card .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+        .stat-card:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash messages (always on top) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px;">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if session.member_id %}
+        <!-- Logged-in layout -->
+        <div class="sidebar" id="sidebar">
+            <a href="{{ url_for('dashboard') }}" class="logo">
+                <i class="fas fa-church"></i>
+                <span>{{ church_name }}</span>
+            </a>
+            <nav class="nav flex-column">
+                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-home"></i><span>Dashboard</span>
+                </a>
+                <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
+                    <i class="fas fa-user-circle"></i><span>Profile</span>
+                </a>
+                
+                </li>
+                <a class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}" href="{{ url_for('attendance') }}">
+                    <i class="fas fa-calendar-check"></i><span>Attendance</span>
+                </a>
+                <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'blog_list' %}active{% endif %}" href="{{ url_for('blog_list') }}">
+                    <i class="fas fa-bullhorn"></i>Blog
+                </a>
+                <a class="nav-link {% if request.endpoint == 'contributions' %}active{% endif %}" href="{{ url_for('contributions') }}">
+                    <i class="fas fa-hand-holding-heart"></i><span>Contributions</span>
+                </a>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'directory' %}active{% endif %}" href="{{ url_for('directory') }}">
+                        <i class="fas fa-address-book"></i>Directory
+                    </a>
+                </li>
+                
+                <a class="nav-link {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}">
+                    <i class="fas fa-calendar-alt"></i><span>Events</span>
+                </a>
+                <a class="nav-link {% if request.endpoint == 'family' %}active{% endif %}" href="{{ url_for('family') }}">
+                    <i class="fas fa-users"></i><span>Family</span>
+                </a>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'my_committees' %}active{% endif %}" href="{{ url_for('my_committees') }}">
+                        <i class="fas fa-users"></i>My Committees
+                    </a>
+                </li>
+                <a class="nav-link {% if request.endpoint == 'resource_library' %}active{% endif %}" href="{{ url_for('resource_library') }}">
+                    <i class="fas fa-book-open"></i><span>Resources</span>
+                </a>
+                <a class="nav-link {% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">
+                    <i class="fas fa-praying-hands"></i><span>Prayer</span>
+                </a>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'volunteer_list' %}active{% endif %}" href="{{ url_for('volunteer_list') }}">
+                        <i class="fas fa-hands-helping"></i>Volunteer
+                    </a>
+                </li>
+                <a class="nav-link {% if request.endpoint == 'change_pin' %}active{% endif %}" href="{{ url_for('change_pin') }}">
+                    <i class="fas fa-key"></i><span>Change PIN</span>
+                </a>
+                <a class="nav-link logout" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="user-info">
+                    <span>Welcome, {{ session.member_name }}</span>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Content block for logged-in pages -->
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Mobile menu toggle -->
+        <button class="btn btn-primary d-lg-none" id="menuToggle" style="position:fixed; bottom:20px; right:20px; z-index:1100; border-radius:50%; width:60px; height:60px;">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <script>
+            document.getElementById('menuToggle')?.addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('show');
+            });
+        </script>
+
+    {% else %}
+        <!-- Logged-out layout (no sidebar) -->
+        <div class="auth-container">
+            <div class="container">
+                <!-- Content block for public pages (e.g., login) -->
+                {% block auth_content %}{% endblock %}
+            </div>
+        </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker registration failed', err));
+  }
+</script>
+</body>
+</html>

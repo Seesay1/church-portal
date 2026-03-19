@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block page_title %}Blog & Announcements{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .blog-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .blog-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .blog-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    .blog-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    .blog-header .btn-light {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+    }
+    .blog-header .btn-light:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .search-section {
+        background: white;
+        border-radius: 60px;
+        padding: 4px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: all 0.3s;
+        max-width: 500px;
+        margin: 0 auto 2rem auto;
+    }
+    .search-section:focus-within {
+        box-shadow: 0 0 0 4px rgba(31,79,163,0.15);
+        border-color: var(--primary);
+    }
+    .search-input {
+        border: none;
+        border-radius: 60px;
+        padding-left: 20px;
+        font-size: 1rem;
+        background: transparent;
+    }
+    .search-input:focus {
+        box-shadow: none;
+        outline: none;
+    }
+
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.8rem;
+        margin-top: 2rem;
+    }
+
+    .blog-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-light);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .blog-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+
+    .blog-card-image {
+        height: 200px;
+        background: linear-gradient(145deg, var(--primary-light), #ffffff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--primary);
+        border-bottom: 1px solid var(--border-light);
+        position: relative;
+        overflow: hidden;
+    }
+    .blog-card-image i {
+        opacity: 0.7;
+        transform: scale(1);
+        transition: transform 0.3s;
+    }
+    .blog-card:hover .blog-card-image i {
+        transform: scale(1.1);
+    }
+
+    .blog-card-content {
+        padding: 1.8rem;
+        flex: 1;
+    }
+
+    .blog-card-category {
+        display: inline-block;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.3rem 1rem;
+        border-radius: 30px;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .blog-card-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.8rem;
+        line-height: 1.3;
+    }
+
+    .blog-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    .blog-card-meta i {
+        margin-right: 0.3rem;
+        font-size: 0.8rem;
+    }
+
+    .blog-card-excerpt {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .blog-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid var(--border-light);
+        padding: 1rem 1.8rem;
+        background: #fafbfc;
+    }
+
+    .blog-card-author {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .author-avatar {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-soft);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .author-name {
+        font-weight: 500;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+    }
+
+    .btn-read-more {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: 40px;
+        padding: 0.4rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-read-more:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateX(3px);
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: 32px;
+        padding: 3rem;
+        max-width: 500px;
+        margin: 2rem auto;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #cbd5e1;
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+    .empty-state h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 1rem 0;
+    }
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .blog-header { padding: 2rem 1.5rem; }
+        .blog-header h1 { font-size: 2rem; }
+        .blog-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Enhanced Header with animated background -->
+    <div class="blog-header d-flex flex-column flex-md-row align-items-center justify-content-between">
+        <div class="mb-3 mb-md-0">
+            <h1><i class="fas fa-bullhorn me-3"></i>Church Announcements</h1>
+            <p>Stay updated with the latest news, events, and devotionals from our church.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-light rounded-pill px-5 py-2">
+            <i class="fas fa-arrow-left me-2"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- Search Bar (optional) -->
+    <div class="search-section d-flex align-items-center">
+        <span class="ps-3 pe-2 text-muted"><i class="fas fa-search"></i></span>
+        <input type="text" id="searchPosts" class="search-input form-control" placeholder="Search announcements...">
+    </div>
+
+    <!-- Blog Grid -->
+    <div class="blog-grid" id="blogGrid">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="blog-card" data-search="{{ post.title.lower() }} {{ post.category.lower() }} {{ post.author.lower() }}">
+                <div class="blog-card-image">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+                <div class="blog-card-content">
+                    {% if post.category %}
+                    <span class="blog-card-category">{{ post.category }}</span>
+                    {% endif %}
+                    <h3 class="blog-card-title">{{ post.title }}</h3>
+                    <div class="blog-card-meta">
+                        <span><i class="far fa-calendar-alt"></i> {{ post.published[:10] }}</span>
+                        <span><i class="far fa-clock"></i> {{ post.read_time|default(3) }} min read</span>
+                    </div>
+                    <p class="blog-card-excerpt">{{ post.content }}</p>
+                </div>
+                <div class="blog-card-footer">
+                    <div class="blog-card-author">
+                        <div class="author-avatar">{{ post.author[:1]|upper if post.author else 'A' }}</div>
+                        <span class="author-name">{{ post.author or 'Admin' }}</span>
+                    </div>
+                    <a href="{{ url_for('blog_detail', post_id=post.id) }}" class="btn-read-more">
+                        Read <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-bullhorn empty-state-icon"></i>
+                <h3>No Announcements Yet</h3>
+                <p>Check back later for updates from our church.</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary rounded-pill px-5 py-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Optional live search (simple) -->
+<script>
+    const searchInput = document.getElementById('searchPosts');
+    const blogGrid = document.getElementById('blogGrid');
+    if (searchInput && blogGrid) {
+        searchInput.addEventListener('keyup', function() {
+            const term = this.value.toLowerCase().trim();
+            const cards = blogGrid.querySelectorAll('.blog-card');
+            cards.forEach(card => {
+                const searchText = card.dataset.search || '';
+                if (term === '' || searchText.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <div class="text-center mb-4">
+                <h4 class="fw-bold">Link Family Member</h4>
+                <p class="text-muted">Enter their Member ID to send a link request</p>
+            </div>
+            
+            <form method="post">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control border-0 bg-light" id="target_member_id" name="target_member_id" placeholder="PCG-XXXX" required>
+                    <label for="target_member_id">Target Member ID</label>
+                </div>
+
+                <div class="mb-4">
+                    <label class="data-label mb-2">Their Relationship to You</label>
+                    <select class="form-select border-0 bg-light rounded-3 py-3" id="relationship" name="relationship" required>
+                        <option value="" selected disabled>Select relationship...</option>
+                        <option value="spouse">Spouse</option>
+                        <option value="parent">Parent</option>
+                        <option value="child">Child</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-info border-0 rounded-4 p-3 small">
+                    <i class="fas fa-shield-alt me-2"></i> Both parties must approve the link before family data can be shared.
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-pcg py-3">Send Connection Request</button>
+                    <a href="{{ url_for('family') }}" class="btn btn-link text-muted text-decoration-none">Back to Hub</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

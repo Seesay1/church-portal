@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<style>
+    /* Card-specific styles only – the outer container is provided by base.html */
+    .login-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 32px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 450px;
+    }
+
+    .login-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+    }
+
+    .church-icon {
+        background: linear-gradient(145deg, #1f4fa3, #0d2b5c);
+        width: 90px;
+        height: 90px;
+        border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.8rem;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.5);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0px); }
+    }
+
+    .church-icon i {
+        font-size: 3.2rem;
+        color: white;
+    }
+
+    h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+
+    .subtitle {
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    /* Form inputs */
+    .form-floating > .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1rem 1rem;
+        height: auto;
+        background: white;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-size: 1rem;
+    }
+
+    .form-floating > .form-control:focus {
+        border-color: #1f4fa3;
+        box-shadow: 0 0 0 4px rgba(31,79,163,0.15);
+        outline: none;
+    }
+
+    .form-floating > label {
+        padding: 1rem;
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .form-floating > .form-control:focus ~ label {
+        color: #1f4fa3;
+    }
+
+    .form-check {
+        padding-left: 2rem;
+    }
+
+    .form-check-input:checked {
+        background-color: #1f4fa3;
+        border-color: #1f4fa3;
+    }
+
+    .form-check-label {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .btn-login {
+        background: linear-gradient(145deg, #1f4fa3, #0d2b5c);
+        border: none;
+        border-radius: 16px;
+        padding: 14px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: white;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+    }
+
+    .btn-login::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-login:hover::before {
+        left: 100%;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px -10px rgba(31,79,163,0.5);
+    }
+
+    .footer-links {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .footer-links a {
+        color: #1f4fa3;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+        color: #0d2b5c;
+        text-decoration: underline;
+    }
+
+    .security-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 1.5rem;
+    }
+
+    .security-badge i {
+        color: #1f4fa3;
+    }
+
+    hr {
+        opacity: 0.3;
+        margin: 1.5rem 0;
+    }
+</style>
+
+<div class="login-card p-4 p-md-5 mx-auto">
+    <div class="church-icon">
+        <i class="fas fa-church"></i>
+    </div>
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to access your church portal</p>
+
+    <form method="post" action="{{ url_for('login') }}" autocomplete="off">
+        <!-- Member ID -->
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="member_id" name="member_id" 
+                   placeholder="PCG-XXXX" required autofocus
+                   pattern="[A-Za-z0-9\-]+" title="Enter a valid Member ID">
+            <label for="member_id"><i class="fas fa-id-card me-2"></i>Member ID</label>
+        </div>
+
+        <!-- PIN with show/hide -->
+        <div class="mb-3">
+            <div class="form-floating">
+                <input type="password" class="form-control" id="pin" name="pin" 
+                       placeholder="PIN" required maxlength="4" pattern="\d{4}" 
+                       inputmode="numeric" autocomplete="new-password">
+                <label for="pin"><i class="fas fa-lock me-2"></i>4‑Digit PIN</label>
+            </div>
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="showPin">
+                <label class="form-check-label" for="showPin">Show PIN</label>
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </button>
+        </div>
+    </form>
+
+    <div class="security-badge">
+        <i class="fas fa-shield-alt"></i>
+        <span>Your connection is secure</span>
+    </div>
+
+    <hr>
+
+    <div class="footer-links">
+        <p class="mb-2">
+            <a href="{{ url_for('forgot_pin') }}"><i class="fas fa-question-circle me-1"></i>Forgot PIN?</a>
+        </p>
+        <p class="small text-muted mb-0">
+            Don't have access? 
+            <a href="mailto:seesay24@gmail.com">Contact the Church Office</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('showPin').addEventListener('change', function(e) {
+        const pinInput = document.getElementById('pin');
+        pinInput.type = e.target.checked ? 'text' : 'password';
+    });
+</script>
+{% endblock %}

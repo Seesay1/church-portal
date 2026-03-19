@@ -1,0 +1,3 @@
+id,member_id,branch_id,full_name,gender,phone,email,address,group_id,department_id,occupation,marital_status,parent_name,school_class,age,photo,baptism_date,baptized_by,baptism_place,confirmation_date,confirmed_by,date_joined,confirmation_place,birth_date,place_of_birth,directory_opt_in
+2,PCG-00-0001,1,Stephen Seesay,Male,0249102912,seesay24@gmail.com,"Box 50, Sampa",2,3,Teaching,Married,Yaw Seth,,,photos\Stephen Seesay.jpg,2026-03-10,Rev. Sachi,Sampa,2026-03-10,Rev. Sachi,2026-03-10,Sampa,,,1
+3,PCG-00-0002,1,Evenly Amoakowaa,Female,0241151824,amoakowaaevelyn@gmail.com,Box 50,1,3,Business,Married,Allah Kabbo Iddrisu,,,photos\Evenly_Amoakowaa_20260313040337.jpg,2026-03-13,Rev. Kofi Sachi,Sampa,2026-03-13,Rev. Kofi Sachi,2026-03-13,Sampa,1989-03-29,,1

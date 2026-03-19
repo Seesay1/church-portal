@@ -1,0 +1,7 @@
+id,user_id,widget_name,widget_order,is_visible
+115,1,Summary Cards,0,1
+116,1,Contribution Chart,1,1
+117,1,Attendance Trend,2,1
+118,1,Member Growth,3,1
+119,1,Upcoming Events List,4,1
+120,1,Recent Contributions,5,1

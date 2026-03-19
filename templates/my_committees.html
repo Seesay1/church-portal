@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block page_title %}My Committees{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f4fa3;
+        --primary-light: #eef2ff;
+        --primary-soft: #e0e7ff;
+        --secondary: #64748b;
+        --accent: #d62828;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.05);
+        --shadow-hover: 0 20px 25px -5px rgba(31,79,163,0.1);
+    }
+
+    body {
+        background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f9 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d2b5c 100%);
+        border-radius: 28px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(31,79,163,0.3);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: rotate 40s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+    }
+    .page-header p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0.3rem 0 0 0;
+        position: relative;
+    }
+    .btn-header {
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 40px;
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        position: relative;
+        z-index: 2;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .committee-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .committee-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: all 0.25s ease;
+        overflow: hidden;
+    }
+    .committee-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
+
+    .card-header {
+        padding: 1.2rem 1.5rem;
+        background: var(--primary-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .card-header h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .role-badge {
+        background: white;
+        color: var(--primary);
+        padding: 0.3rem 1rem;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+    .description {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    /* New meta section styles */
+    .committee-meta {
+        margin: 1rem 0;
+    }
+    .meta-item {
+        display: flex;
+        align-items: baseline;
+        padding: 0.3rem 0;
+        border-bottom: 1px dashed var(--border-light);
+    }
+    .meta-item:last-child {
+        border-bottom: none;
+    }
+    .meta-item i {
+        width: 24px;
+        color: var(--primary);
+    }
+    .meta-label {
+        width: 80px;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    .meta-value {
+        flex: 1;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 1rem 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .section-title i {
+        color: var(--primary);
+    }
+
+    .meeting-item, .activity-item {
+        background: #f9fafc;
+        border-radius: 12px;
+        padding: 0.6rem 1rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        border-left: 3px solid var(--primary);
+    }
+    .meeting-item small, .activity-item small {
+        color: var(--text-muted);
+        display: block;
+        font-size: 0.8rem;
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-users-cog me-3"></i>My Committees</h1>
+            <p>Your involvement in church committees – roles, meetings, and activities.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-header">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="committee-grid">
+        {% if committees %}
+            {% for c in committees %}
+            <div class="committee-card">
+                <div class="card-header">
+                    <h3>{{ c.name }}</h3>
+                    <span class="role-badge">{{ c.role }}</span>
+                </div>
+                <div class="card-body">
+                    {% if c.description %}
+                    <p class="description">{{ c.description }}</p>
+                    {% endif %}
+
+                    <div class="committee-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-sitemap"></i>
+                            <span class="meta-label">Branch:</span>
+                            <span class="meta-value">{{ c.branch }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-users"></i>
+                            <span class="meta-label">Members:</span>
+                            <span class="meta-value">{{ c.total_members }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span class="meta-label">Joined:</span>
+                            <span class="meta-value">{{ c.joined }}</span>
+                        </div>
+                    </div>
+
+                    {% if c.meetings %}
+                    <div class="section-title"><i class="fas fa-calendar-alt"></i> Upcoming Meetings</div>
+                    {% for m in c.meetings %}
+                    <div class="meeting-item">
+                        <strong>{{ m.date }}</strong><br>
+                        {{ m.agenda }}<br>
+                        <small><i class="fas fa-map-marker-alt"></i> {{ m.location or 'TBA' }}</small>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if c.activities %}
+                    <div class="section-title"><i class="fas fa-tasks"></i> Recent Activities</div>
+                    {% for a in c.activities %}
+                    <div class="activity-item">
+                        <strong>{{ a.name }}</strong><br>
+                        {{ a.start }} – {{ a.end }} · Status: {{ a.status }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if not c.meetings and not c.activities %}
+                    <p class="text-muted small">No upcoming meetings or activities.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
+                <h4>You are not a member of any committees yet</h4>
+                <p class="text-muted">When you're added to a committee, it will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
