@@ -6,7 +6,12 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, date, timedelta
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        return False
 
 # Load environment variables before importing modules that read them at import time.
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))

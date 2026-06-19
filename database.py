@@ -1,561 +1,283 @@
-import sqlite3
+# database.py - PostgreSQL version for desktop app and web portal
 import hashlib
-from sqlite3 import Error
+import logging
 import os
+import re
+from pathlib import Path
+from urllib.parse import quote_plus, urlparse
 
-DB_FILE = "church_system.db"
+import psycopg2
 
-# --- Security Helper ---
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        return False
+from werkzeug.security import check_password_hash, generate_password_hash
+
+logger = logging.getLogger(__name__)
+
+_LEGACY_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+
+
+def _build_database_url():
+    explicit_url = os.getenv("DATABASE_URL")
+    if explicit_url:
+        return explicit_url
+
+    user = os.getenv("DB_USER", "postgres")
+    password = os.getenv("DB_PASSWORD", "postgres")
+    host = os.getenv("DB_HOST", "localhost")
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "church_db")
+
+    auth = quote_plus(user)
+    if password:
+        auth = f"{auth}:{quote_plus(password)}"
+    return f"postgresql://{auth}@{host}:{port}/{name}"
+
+
+DEFAULT_DB_URL = _build_database_url()
+BASE_DIR = Path(__file__).resolve().parent
+MIGRATIONS_DIR = BASE_DIR / "migrations"
+CORE_SCHEMA_FILE = MIGRATIONS_DIR / "core_schema.sql"
+FEATURE_SCHEMA_FILES = (
+    MIGRATIONS_DIR / "assets_service_tables.sql",
+)
+REQUIRED_TABLES = (
+    "attendance",
+    "audit_log",
+    "blog_posts",
+    "branches",
+    "certificate_requests",
+    "certificates",
+    "committee_activities",
+    "committee_expenses",
+    "committee_meetings",
+    "committee_members",
+    "committee_roles",
+    "committees",
+    "departments",
+    "event_registrations",
+    "events",
+    "families",
+    "family_link_requests",
+    "family_links",
+    "family_members",
+    "financial_records",
+    "groups",
+    "id_cards",
+    "member_portal",
+    "members",
+    "notification_history",
+    "prayer_requests",
+    "resources",
+    "saved_reports",
+    "settings",
+    "sms_logs",
+    "user_widgets",
+    "users",
+    "volunteer_opportunities",
+    "volunteer_signups",
+    "asset_categories",
+    "assets",
+    "asset_maintenance",
+    "asset_assignments",
+    "service_types",
+    "service_schedule",
+    "service_items",
+    "service_songs",
+    "sermons",
+    "service_teams",
+)
+
+
+def _legacy_sha256(password):
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def is_legacy_hash(stored_hash):
+    return bool(stored_hash and _LEGACY_SHA256_RE.fullmatch(stored_hash))
+
+
 def hash_password(password):
-    """Return a hashed version of the password using SHA-256."""
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    """Return a modern password hash for new or updated credentials."""
+    return generate_password_hash(password, method="scrypt")
+
+
+def verify_password(password, stored_hash):
+    """Verify a password against either a legacy SHA-256 or modern Werkzeug hash."""
+    if not stored_hash:
+        return False
+    if is_legacy_hash(stored_hash):
+        return _legacy_sha256(password) == stored_hash
+    try:
+        return check_password_hash(stored_hash, password)
+    except (ValueError, TypeError):
+        return False
+
+
+def password_needs_upgrade(stored_hash):
+    return is_legacy_hash(stored_hash)
+
+
+def create_connection():
+    """Create and return a database connection (for compatibility)."""
+    return psycopg2.connect(DEFAULT_DB_URL)
+
+
+def get_postgres_connection_info(db_url=None):
+    """Return parsed PostgreSQL connection details for tooling such as pg_dump/psql."""
+    parsed = urlparse(db_url or DEFAULT_DB_URL)
+    return {
+        "dbname": parsed.path.lstrip("/"),
+        "host": parsed.hostname or "localhost",
+        "port": str(parsed.port or 5432),
+        "user": parsed.username or "",
+        "password": parsed.password or "",
+    }
+
 
 class DatabaseManager:
-    def __init__(self):
+    def __init__(self, db_url=None):
+        self.db_url = db_url or DEFAULT_DB_URL
         self.conn = None
 
     def connect(self):
-        try:
-            self.conn = sqlite3.connect(DB_FILE, timeout=10)
-            self.conn.execute("PRAGMA foreign_keys = ON")
-            return self.conn
-        except Error as e:
-            print(f"Database connection error: {e}")
-            return None
+        """Establish a connection if not already open."""
+        if self.conn is None or self.conn.closed:
+            self.conn = psycopg2.connect(self.db_url)
+        return self.conn
 
-    def close(self):
-        if self.conn:
-            self.conn.close()
+    def _convert_query(self, query):
+        """Replace SQLite ? placeholders with PostgreSQL %s placeholders."""
+        return query.replace("?", "%s")
 
-    def execute_query(self, query, params=()):
-        conn = None
+    def execute_query(self, query, params=None):
+        """Execute an INSERT, UPDATE, or DELETE query."""
+        conn = self.connect()
+        query = self._convert_query(query)
         try:
-            conn = sqlite3.connect(DB_FILE, timeout=10)  # wait up to 10 seconds
-            cursor = conn.cursor()
-            cursor.execute(query, params)
-            conn.commit()
-            return True
-        except Exception as e:
-            print(f"Query Error: {e}")
-            return False
-        finally:
-            if conn:
-                conn.close()
+            with conn.cursor() as cur:
+                cur.execute(query, params or ())
+                conn.commit()
+                return True
+        except Exception:
+            conn.rollback()
+            raise
 
     def fetch_all(self, query, params=None):
-        """Execute a SELECT query and return all rows."""
-        if not self.connect():
-            return []
-        cursor = self.conn.cursor()
+        """Fetch all rows from a SELECT query."""
+        conn = self.connect()
+        query = self._convert_query(query)
         try:
-            if params:
-                cursor.execute(query, params)
-            else:
-                cursor.execute(query)
-            return cursor.fetchall()
-        except Error as e:
-            print(f"Fetch Error: {e}")
-            return []
-        finally:
-            self.close()
+            with conn.cursor() as cur:
+                cur.execute(query, params or ())
+                return cur.fetchall()
+        except Exception:
+            conn.rollback()
+            raise
 
     def fetch_one(self, query, params=None):
-        """Execute a SELECT query and return one row."""
-        if not self.connect():
-            return None
-        cursor = self.conn.cursor()
+        """Fetch a single row from a SELECT query."""
+        conn = self.connect()
+        query = self._convert_query(query)
         try:
-            if params:
-                cursor.execute(query, params)
-            else:
-                cursor.execute(query)
-            return cursor.fetchone()
-        except Error as e:
-            print(f"Fetch Error: {e}")
-            return None
-        finally:
-            self.close()
+            with conn.cursor() as cur:
+                cur.execute(query, params or ())
+                return cur.fetchone()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def execute_returning_one(self, query, params=None):
+        """Execute a write query with RETURNING and commit before returning one row."""
+        conn = self.connect()
+        query = self._convert_query(query)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(query, params or ())
+                row = cur.fetchone()
+                conn.commit()
+                return row
+        except Exception:
+            conn.rollback()
+            raise
+
+    def close(self):
+        """Close the database connection."""
+        if self.conn and not self.conn.closed:
+            self.conn.close()
+
+
+def execute_sql_file(file_path, db=None):
+    """Execute an entire SQL file inside a single transaction."""
+    sql_path = Path(file_path)
+    if not sql_path.exists():
+        raise FileNotFoundError(f"SQL file not found: {sql_path}")
+
+    manager = db or DatabaseManager()
+    conn = manager.connect()
+    sql = sql_path.read_text(encoding="utf-8")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def get_missing_tables(required_tables=None, db=None):
+    """Return a sorted list of required tables that are missing from the public schema."""
+    manager = db or DatabaseManager()
+    rows = manager.fetch_all(
+        """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        """
+    )
+    existing = {row[0] for row in rows}
+    required = set(required_tables or REQUIRED_TABLES)
+    return sorted(required - existing)
 
 
 def setup_database():
-    import os
-    print("Database path:", os.path.abspath(DB_FILE))
-    """Create all tables with retry on lock."""
-    import time
-    max_attempts = 5
-    for attempt in range(max_attempts):
-        try:
-            with sqlite3.connect(DB_FILE, timeout=20) as conn:
-                conn.execute("PRAGMA foreign_keys = ON")
-                cursor = conn.cursor()
-                # ... all your CREATE TABLE statements ...
-                conn.commit()
-            print("Database setup complete!")
-            return
-        except sqlite3.OperationalError as e:
-            if "locked" in str(e) and attempt < max_attempts - 1:
-                print(f"Database locked, retrying ({attempt+1}/{max_attempts})...")
-                time.sleep(2)
-            else:
-                print(f"Fatal database error: {e}")
-                raise
-
-    # ---------- Branches ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS branches (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,
-        address TEXT,
-        phone TEXT
-    )
-    """)
-
-    # ---------- Groups ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS groups (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE
-    )
-    """)
-
-    # ---------- Departments ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS departments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE
-    )
-    """)
-
-    # ---------- Members ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id TEXT UNIQUE,
-        branch_id INTEGER,
-        full_name TEXT,
-        gender TEXT,
-        phone TEXT,
-        email TEXT,
-        address TEXT,
-        group_id INTEGER,
-        department_id INTEGER,
-        occupation TEXT,
-        marital_status TEXT,
-        parent_name TEXT,
-        school_class TEXT,
-        age INTEGER,
-        photo TEXT,
-        baptism_date TEXT,
-        baptized_by TEXT,
-        baptism_place TEXT,
-        confirmation_date TEXT,
-        confirmed_by TEXT,
-        date_joined TEXT,
-        FOREIGN KEY(branch_id) REFERENCES branches(id),
-        FOREIGN KEY(group_id) REFERENCES groups(id),
-        FOREIGN KEY(department_id) REFERENCES departments(id)
-    )
-    """)
-
+    """
+    Initialize PostgreSQL schema for both desktop and web app entry points.
+    """
+    db = DatabaseManager()
     try:
-        cursor.execute("ALTER TABLE members ADD COLUMN confirmation_place TEXT")
-    except:
-        pass
+        if CORE_SCHEMA_FILE.exists():
+            execute_sql_file(CORE_SCHEMA_FILE, db=db)
 
-    # ---------- Families / Household ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS families (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        family_name TEXT,
-        head_of_family TEXT
-    )
-    """)
+        for schema_file in FEATURE_SCHEMA_FILES:
+            if schema_file.exists():
+                execute_sql_file(schema_file, db=db)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS family_members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        family_id INTEGER,
-        member_id INTEGER,
-        relation TEXT,
-        FOREIGN KEY(family_id) REFERENCES families(id),
-        FOREIGN KEY(member_id) REFERENCES members(id)
-    )
-    """)
+        missing_tables = get_missing_tables(db=db)
+        if missing_tables:
+            missing_preview = ", ".join(missing_tables[:10])
+            if len(missing_tables) > 10:
+                missing_preview += ", ..."
+            raise RuntimeError(
+                "Database schema is incomplete. Missing tables: "
+                f"{missing_preview}. Run the project migrations before starting the app."
+            )
 
-    # ---------- Attendance ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS attendance (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER,
-        branch_id INTEGER,
-        group_id INTEGER,
-        date TEXT,
-        event_id INTEGER,
-        present INTEGER DEFAULT 0,
-        FOREIGN KEY(member_id) REFERENCES members(id),
-        FOREIGN KEY(branch_id) REFERENCES branches(id),
-        FOREIGN KEY(group_id) REFERENCES groups(id)
-    )
-    """)
-    
-    # Add 'present' column if table exists but column is missing (for existing DBs)
-    try:
-        cursor.execute("ALTER TABLE attendance ADD COLUMN present INTEGER DEFAULT 0")
-    except:
-        pass
+        logger.info("Database schema verified successfully")
+    finally:
+        db.close()
 
-    # ---------- Financial Records ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS financial_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT,
-        member_id INTEGER,
-        branch_id INTEGER,
-        group_id INTEGER,
-        amount REAL,
-        date TEXT,
-        FOREIGN KEY(member_id) REFERENCES members(id),
-        FOREIGN KEY(branch_id) REFERENCES branches(id),
-        FOREIGN KEY(group_id) REFERENCES groups(id)
-    )
-    """)
-    # Add description column if missing (fix for contributions page)
-    try:
-        cursor.execute("ALTER TABLE financial_records ADD COLUMN description TEXT")
-    except:
-        pass
-
-    # ---------- Events ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        branch_id INTEGER,
-        date TEXT,
-        description TEXT,
-        time TEXT,
-        location TEXT,
-        branch_group TEXT,
-        FOREIGN KEY(branch_id) REFERENCES branches(id)
-    )
-    """)
-    
-    # Add missing columns for events (capacity, registration_deadline, created_by)
-    try:
-        cursor.execute("ALTER TABLE events ADD COLUMN capacity INTEGER")
-    except:
-        pass
-    try:
-        cursor.execute("ALTER TABLE events ADD COLUMN registration_deadline DATE")
-    except:
-        pass
-    try:
-        cursor.execute("ALTER TABLE events ADD COLUMN created_by INTEGER REFERENCES users(id)")
-    except:
-        pass
-
-    # ---------- Event Registrations ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS event_registrations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
-        member_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        attended INTEGER DEFAULT 0,
-        UNIQUE(event_id, member_id)
-    )
-    """)
-
-    # ---------- SMS Logs ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS sms_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        phone TEXT,
-        message TEXT,
-        status TEXT,
-        date_sent TEXT
-    )
-    """)
-
-    # ---------- Settings ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT UNIQUE,
-        value TEXT
-    )
-    """)
-    
-    # Insert default settings
-    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", ('church_name', 'Your Church'))
-    
-    # ---------- Users ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT,
-        role TEXT
-    )
-    """)
-    # Add security question and answer columns if they don't exist
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN security_question TEXT")
-    except:
-        pass
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN security_answer TEXT")
-    except:
-        pass
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN branch_id INTEGER REFERENCES branches(id)")
-    except Exception as e:
-        print("Note: branch_id column may already exist:", e)
-
-    # ---------- Audit log table ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audit_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        table_name TEXT,
-        record_id INTEGER,
-        action TEXT,  -- 'INSERT', 'UPDATE', 'DELETE'
-        old_values TEXT,  -- JSON
-        new_values TEXT,  -- JSON
-        user_id INTEGER,
-        timestamp TEXT,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
-
-    # ---------- Member portal PINs ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS member_portal (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER UNIQUE,
-        pin TEXT,  -- hashed PIN
-        last_login TEXT,
-        FOREIGN KEY(member_id) REFERENCES members(id)
-    )
-    """)
-    try:
-        cursor.execute("ALTER TABLE member_portal ADD COLUMN last_login TEXT")
-    except:
-        pass
-
-    # ---------- User widgets preferences (for dashboard) ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS user_widgets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        widget_name TEXT,
-        widget_order INTEGER,
-        is_visible INTEGER DEFAULT 1,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)    
-
-    # ---------- Certificates ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS certificates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER,
-        certificate_type TEXT,
-        verse TEXT,
-        generated_date TEXT,
-        FOREIGN KEY (member_id) REFERENCES members(id)
-    )
-    """)
-    
-    # ---------- ID Cards ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS id_cards (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER,
-        generated_date TEXT,
-        FOREIGN KEY (member_id) REFERENCES members(id)
-    )
-    """)
-    
-    # ---------- Certificate Requests (for member portal) ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS certificate_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER NOT NULL,
-        certificate_type TEXT NOT NULL,
-        request_date TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',  -- pending, approved, completed, rejected
-        admin_notes TEXT,
-        FOREIGN KEY(member_id) REFERENCES members(id)
-    )
-    """)
-
-
-    # ---------- Prayer Requests ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS prayer_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER REFERENCES members(id) ON DELETE SET NULL,
-        request TEXT NOT NULL,
-        is_public INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'pending',  -- pending, prayed, answered
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # ---------- Member-to-Member Family Links (direct relationships) ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS family_links (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member1_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-        member2_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-        relationship TEXT,  -- 'spouse', 'child', 'parent', 'sibling'
-        status TEXT DEFAULT 'approved',  -- 'approved', 'pending' (if approval required)
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(member1_id, member2_id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS family_link_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        requester_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-        target_member_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-        relationship TEXT,
-        status TEXT DEFAULT 'pending',  -- pending, approved, rejected
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(requester_id, target_member_id)
-    )
-    """)
-
-
-    # ---------- Committees ----------
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committees (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,                -- e.g. "Administration and Human Resources"
-        description TEXT,
-        chairperson_id INTEGER,           -- member ID (from members table)
-        created_date TEXT,
-        FOREIGN KEY (chairperson_id) REFERENCES members(id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committee_members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        committee_id INTEGER,
-        member_id INTEGER,
-        role TEXT,                        -- e.g. "Member", "Secretary", "Treasurer"
-        joined_date TEXT,
-        FOREIGN KEY (committee_id) REFERENCES committees(id),
-        FOREIGN KEY (member_id) REFERENCES members(id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committee_meetings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        committee_id INTEGER,
-        meeting_date TEXT,
-        agenda TEXT,
-        minutes TEXT,
-        location TEXT,
-        FOREIGN KEY (committee_id) REFERENCES committees(id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committee_activities (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        committee_id INTEGER,
-        name TEXT,
-        description TEXT,
-        start_date TEXT,
-        end_date TEXT,
-        budget REAL,
-        status TEXT DEFAULT 'planned',     -- planned, ongoing, completed, cancelled
-        FOREIGN KEY (committee_id) REFERENCES committees(id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committee_expenses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        activity_id INTEGER,
-        amount REAL,
-        expense_date TEXT,
-        description TEXT,
-        FOREIGN KEY (activity_id) REFERENCES committee_activities(id)
-    )
-    """)
-
-    # Committee roles (per committee, with unique names)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS committee_roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        committee_id INTEGER NOT NULL,
-        UNIQUE(committee_id, name),
-        FOREIGN KEY(committee_id) REFERENCES committees(id) ON DELETE CASCADE
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS notification_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        type TEXT,
-        title TEXT,
-        message TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    
-    # In database.py, add to your existing table creation section
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS resources (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
-        category TEXT,
-        filename TEXT NOT NULL,
-        file_path TEXT NOT NULL,
-        file_size INTEGER,
-        file_type TEXT,
-        download_count INTEGER DEFAULT 0,
-        uploaded_by INTEGER,  -- removed REFERENCES members(id) for now
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS blog_posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        author TEXT,
-        category TEXT,
-        published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_published INTEGER DEFAULT 1
-    )
-    """)
-    
-    # ---------- Default Admin ----------
-    default_pass = hash_password("admin123")
-    cursor.execute("""
-    INSERT OR IGNORE INTO users(username, password, role)
-    VALUES(?,?,?)
-    """, ('admin', default_pass, 'Admin'))
-    
-
-    # ---------- Commit & Close ----------
-    conn.commit()
-    conn.close()
-    print("Database setup complete!")
-    
 
 if __name__ == "__main__":
-    setup_database()
+    db = DatabaseManager()
+    try:
+        result = db.fetch_one("SELECT COUNT(*) FROM volunteer_signups")
+        logger.info("Connected! Total signups: %s", result[0])
+    except Exception:
+        logger.exception("Connection failed")
