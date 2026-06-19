@@ -69,7 +69,8 @@ def get_csrf_token():
 
 @app.before_request
 def protect_against_csrf():
-    if request.endpoint == 'logout':
+    # Logout is intentionally exempt so legacy links and buttons can still sign out cleanly.
+    if request.path == '/logout' or request.endpoint == 'logout':
         return
     if request.method == 'POST':
         sent_token = request.form.get('csrf_token', '')
