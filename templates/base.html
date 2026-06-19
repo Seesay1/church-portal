@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Church Member Portal</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <!-- PWA Manifest -->
+    <!-- Custom styles -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- Custom styles -->
     <style>
-        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
             background: #f0f4f8;
             min-height: 100vh;
         }
-        /* Desktop sidebar (≥992px) */
-        .desktop-sidebar {
+        /* Sidebar (only when logged in) */
+        .sidebar {
             position: fixed;
             top: 0;
             left: 0;
@@ -33,8 +37,10 @@
             transition: all 0.3s;
             z-index: 1000;
             box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
         }
-        .desktop-sidebar .logo {
+        .sidebar .logo {
             font-size: 1.5rem;
             font-weight: 700;
             display: flex;
@@ -45,11 +51,16 @@
             color: #fff;
             text-decoration: none;
         }
-        .desktop-sidebar .logo i {
+        .sidebar .logo i {
             font-size: 2rem;
             color: #4a90e2;
         }
-        .desktop-sidebar .nav-link {
+        .sidebar .nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar .nav-link {
             color: rgba(255,255,255,0.7);
             padding: 0.9rem 1rem;
             margin: 0.2rem 0;
@@ -60,27 +71,27 @@
             transition: all 0.2s;
             font-weight: 500;
         }
-        .desktop-sidebar .nav-link i {
+        .sidebar .nav-link i {
             width: 24px;
             font-size: 1.2rem;
             text-align: center;
         }
-        .desktop-sidebar .nav-link:hover {
+        .sidebar .nav-link:hover {
             background: rgba(255,255,255,0.1);
             color: white;
             transform: translateX(5px);
         }
-        .desktop-sidebar .nav-link.active {
+        .sidebar .nav-link.active {
             background: #4a90e2;
             color: white;
             box-shadow: 0 8px 16px rgba(74,144,226,0.3);
         }
-        .desktop-sidebar .nav-link.logout {
+        .sidebar .nav-link.logout {
             margin-top: 2rem;
             border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 1.5rem;
         }
-        /* Main content when sidebar is visible */
+        /* Main content (only when logged in) */
         .main-content {
             margin-left: 280px;
             padding: 2rem;
@@ -118,7 +129,7 @@
             color: white;
             font-size: 1.2rem;
         }
-        /* Auth container for login page */
+        /* Auth container (for login page) */
         .auth-container {
             min-height: 100vh;
             display: flex;
@@ -127,79 +138,197 @@
             padding: 2rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        /* Mobile header (visible only below 992px) */
-        .mobile-header {
-            display: none;
-            background: linear-gradient(135deg, #1a2b4c, #0e1a2f);
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .church-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .login-card h2 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 10px;
             color: white;
-            padding: 1rem;
+            font-weight: 500;
+            transition: transform 0.2s;
         }
-        /* Offcanvas sidebar (mobile) */
-        .offcanvas.offcanvas-start {
-            background: #0e1a2f;
-            color: white;
+        .btn-login:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
         }
-        .offcanvas .offcanvas-header {
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        .security-badge {
+            margin-top: 1.5rem;
+            color: #666;
+            font-size: 0.9rem;
         }
-        .offcanvas .offcanvas-title {
-            color: white;
+        .security-badge i {
+            color: #28a745;
+            margin-right: 0.5rem;
         }
-        .offcanvas .btn-close-white {
-            filter: invert(1) grayscale(100%) brightness(200%);
+        .footer-links a {
+            color: #667eea;
+            text-decoration: none;
         }
-        .offcanvas .nav-link {
-            color: rgba(255,255,255,0.7);
-            padding: 0.8rem 1rem;
-            margin: 0.2rem 0;
-            border-radius: 12px;
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        /* Sidebar User Profile Card */
+        .sidebar-profile {
+            margin-top: auto;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.15) 0%, rgba(26, 43, 76, 0.4) 100%);
+            border-radius: 16px;
+            margin: 0 -1rem auto -1rem;
+            padding: 1.5rem 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(74, 144, 226, 0.2);
+        }
+        .sidebar-profile:hover {
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.25) 0%, rgba(26, 43, 76, 0.5) 100%);
+            border-color: rgba(74, 144, 226, 0.4);
+            box-shadow: 0 8px 24px rgba(74, 144, 226, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .sidebar-profile-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(74, 144, 226, 0.2));
             display: flex;
             align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
+            justify-content: center;
+            margin-bottom: 1rem;
+            border: 3px solid #4a90e2;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
         }
-        .offcanvas .nav-link i {
-            width: 24px;
-            font-size: 1.2rem;
+        .sidebar-profile:hover .sidebar-profile-avatar {
+            border-color: #5ca3f5;
+            box-shadow: 0 8px 20px rgba(74, 144, 226, 0.35);
+            transform: scale(1.08) rotateY(5deg);
         }
-        .offcanvas .nav-link:hover,
-        .offcanvas .nav-link.active {
-            background: rgba(255,255,255,0.1);
+        .sidebar-profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-profile:hover .sidebar-profile-avatar img {
+            transform: scale(1.1);
+        }
+        .sidebar-profile-avatar i {
+            font-size: 2rem;
+            color: #4a90e2;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-profile:hover .sidebar-profile-avatar i {
+            transform: scale(1.15);
+        }
+        .sidebar-profile-name {
             color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+            max-width: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        /* Flash messages (floating) */
-        .flash-messages {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            width: 350px;
+        .sidebar-profile:hover .sidebar-profile-name {
+            text-shadow: 0 0 8px rgba(74, 144, 226, 0.4);
         }
-        /* Responsive breakpoints */
-        @media (max-width: 991.98px) {
-            .desktop-sidebar {
+        .sidebar-profile-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            background: rgba(74, 144, 226, 0.15);
+            border: 1px solid rgba(74, 144, 226, 0.25);
+        }
+        .sidebar-profile-link:hover {
+            color: white;
+            background: linear-gradient(135deg, #4a90e2 0%, #5ca3f5 100%);
+            border-color: #5ca3f5;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(74, 144, 226, 0.3);
+        }
+        .sidebar-profile-link i {
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-profile-link:hover i {
+            transform: translateX(2px);
+        }
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+                padding: 2rem 0.5rem;
+            }
+            .sidebar .logo span {
                 display: none;
             }
-            .mobile-header {
-                display: block;
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link i {
+                margin: 0 auto;
+                font-size: 1.5rem;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+        @media (max-width: 576px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+            }
+            .sidebar.show {
+                transform: translateX(0);
             }
             .main-content {
                 margin-left: 0;
-                padding: 1.5rem;
             }
             .top-bar {
                 flex-direction: column;
                 align-items: start;
-                gap: 0.5rem;
-                margin-top: 1rem;
+                gap: 1rem;
             }
         }
-        @media (min-width: 992px) {
-            .mobile-header {
-                display: none;
-            }
-        }
-        /* Card hover tooltips (from your original) */
+        /* Card hover effects */
         .stat-card {
             position: relative;
         }
@@ -225,13 +354,223 @@
             visibility: visible;
             opacity: 1;
         }
+        /* Dashboard specific styles */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .welcome-card {
+            background: linear-gradient(135deg, #1f4fa3 0%, #0d2b5c 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(31, 79, 163, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .welcome-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        .welcome-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(31, 79, 163, 0.3), 0 0 30px rgba(74, 144, 226, 0.15);
+        }
+        .welcome-card:hover::after {
+            opacity: 1;
+        }
+        .welcome-card h1 {
+            font-size: 2rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+        .welcome-card:hover h1 {
+            transform: translateX(4px);
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .welcome-card p {
+            font-size: 0.95rem;
+            opacity: 0.95;
+            margin: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+        .welcome-card:hover p {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border-left: 5px solid #1f4fa3;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(31, 79, 163, 0.05), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-box:hover::before {
+            left: 100%;
+        }
+        .stat-box:hover {
+            transform: translateY(-8px) translateX(0);
+            box-shadow: 0 12px 32px rgba(31, 79, 163, 0.18), 0 0 20px rgba(31, 79, 163, 0.08);
+            border-left-color: #4a90e2;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            color: #1f4fa3;
+            margin-bottom: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-block;
+        }
+        .stat-box:hover .stat-icon {
+            transform: scale(1.15) rotate(5deg);
+            color: #4a90e2;
+            filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-box:hover .stat-label {
+            color: #1f4fa3;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-box:hover .stat-value {
+            color: #1f4fa3;
+            transform: scale(1.05);
+        }
+        .content-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(31, 79, 163, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(74, 144, 226, 0.08) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(31, 79, 163, 0.12), 0 0 24px rgba(31, 79, 163, 0.06);
+            border-color: rgba(31, 79, 163, 0.15);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
+        }
+        .card:hover::before {
+            opacity: 1;
+        }
+        .card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card:hover h3 {
+            color: #0d2b5c;
+        }
+        .card h3 i {
+            color: #1f4fa3;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.4rem;
+        }
+        .card:hover h3 i {
+            color: #4a90e2;
+            transform: scale(1.2) rotate(-10deg);
+            filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.25));
+        }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+            if (!csrfToken) {
+                return;
+            }
+
+            document.querySelectorAll('form').forEach(function(form) {
+                const method = (form.getAttribute('method') || '').toLowerCase();
+                if (method === 'post' && !form.querySelector('input[name="csrf_token"]')) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'csrf_token';
+                    input.value = csrfToken;
+                    form.appendChild(input);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <!-- Flash messages (always on top) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="flash-messages">
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px;">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
                         <i class="fas fa-info-circle me-2"></i>{{ message }}
@@ -243,121 +582,87 @@
     {% endwith %}
 
     {% if session.member_id %}
-        <!-- Mobile header (visible on small screens) -->
-        <div class="mobile-header d-flex justify-content-between align-items-center">
-            <button class="btn btn-outline-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
-                <i class="fas fa-bars"></i> Menu
-            </button>
-            <span class="fw-bold">{{ church_name }}</span>
-        </div>
-
-        <!-- Offcanvas sidebar (mobile) -->
-        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasSidebarLabel">{{ church_name }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body p-0">
-                <nav class="nav flex-column">
-                    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
-                        <i class="fas fa-user-circle"></i> Profile
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}" href="{{ url_for('attendance') }}">
-                        <i class="fas fa-calendar-check"></i> Attendance
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'blog_list' %}active{% endif %}" href="{{ url_for('blog_list') }}">
-                        <i class="fas fa-bullhorn"></i> Blog
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'contributions' %}active{% endif %}" href="{{ url_for('contributions') }}">
-                        <i class="fas fa-hand-holding-heart"></i> Contributions
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'directory' %}active{% endif %}" href="{{ url_for('directory') }}">
-                        <i class="fas fa-address-book"></i> Directory
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}">
-                        <i class="fas fa-calendar-alt"></i> Events
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'family' %}active{% endif %}" href="{{ url_for('family') }}">
-                        <i class="fas fa-users"></i> Family
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'my_committees' %}active{% endif %}" href="{{ url_for('my_committees') }}">
-                        <i class="fas fa-users-cog"></i> My Committees
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'resource_library' %}active{% endif %}" href="{{ url_for('resource_library') }}">
-                        <i class="fas fa-book-open"></i> Resources
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">
-                        <i class="fas fa-praying-hands"></i> Prayer
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'volunteer_list' %}active{% endif %}" href="{{ url_for('volunteer_list') }}">
-                        <i class="fas fa-hands-helping"></i> Volunteer
-                    </a>
-                    <a class="nav-link {% if request.endpoint == 'change_pin' %}active{% endif %}" href="{{ url_for('change_pin') }}">
-                        <i class="fas fa-key"></i> Change PIN
-                    </a>
-                    <a class="nav-link logout" href="{{ url_for('logout') }}">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Desktop sidebar (visible on large screens) -->
-        <div class="desktop-sidebar">
+        <!-- Logged-in layout -->
+        <div class="sidebar" id="sidebar">
             <a href="{{ url_for('dashboard') }}" class="logo">
                 <i class="fas fa-church"></i>
                 <span>{{ church_name }}</span>
-            </a>
-            <nav class="nav flex-column">
-                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
-                    <i class="fas fa-home"></i> <span>Dashboard</span>
                 </a>
-                <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
-                    <i class="fas fa-user-circle"></i> <span>Profile</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}" href="{{ url_for('attendance') }}">
-                    <i class="fas fa-calendar-check"></i> <span>Attendance</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'blog_list' %}active{% endif %}" href="{{ url_for('blog_list') }}">
-                    <i class="fas fa-bullhorn"></i> <span>Blog</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'contributions' %}active{% endif %}" href="{{ url_for('contributions') }}">
-                    <i class="fas fa-hand-holding-heart"></i> <span>Contributions</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'directory' %}active{% endif %}" href="{{ url_for('directory') }}">
-                    <i class="fas fa-address-book"></i> <span>Directory</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}">
-                    <i class="fas fa-calendar-alt"></i> <span>Events</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'family' %}active{% endif %}" href="{{ url_for('family') }}">
-                    <i class="fas fa-users"></i> <span>Family</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'my_committees' %}active{% endif %}" href="{{ url_for('my_committees') }}">
-                    <i class="fas fa-users-cog"></i> <span>My Committees</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'resource_library' %}active{% endif %}" href="{{ url_for('resource_library') }}">
-                    <i class="fas fa-book-open"></i> <span>Resources</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">
-                    <i class="fas fa-praying-hands"></i> <span>Prayer</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'volunteer_list' %}active{% endif %}" href="{{ url_for('volunteer_list') }}">
-                    <i class="fas fa-hands-helping"></i> <span>Volunteer</span>
-                </a>
-                <a class="nav-link {% if request.endpoint == 'change_pin' %}active{% endif %}" href="{{ url_for('change_pin') }}">
-                    <i class="fas fa-key"></i> <span>Change PIN</span>
-                </a>
-                <a class="nav-link logout" href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-                </a>
-            </nav>
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-home"></i><span>Dashboard</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
+                        <i class="fas fa-user-circle"></i><span>Profile</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}" href="{{ url_for('attendance') }}">
+                        <i class="fas fa-calendar-check"></i><span>Attendance</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'blog_list' %}active{% endif %}" href="{{ url_for('blog_list') }}">
+                        <i class="fas fa-bullhorn"></i><span>Blog</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'contributions' %}active{% endif %}" href="{{ url_for('contributions') }}">
+                        <i class="fas fa-hand-holding-heart"></i><span>Contributions</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'directory' %}active{% endif %}" href="{{ url_for('directory') }}">
+                        <i class="fas fa-address-book"></i><span>Directory</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}">
+                        <i class="fas fa-calendar-alt"></i><span>Events</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'family' %}active{% endif %}" href="{{ url_for('family') }}">
+                        <i class="fas fa-users"></i><span>Family</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'my_committees' %}active{% endif %}" href="{{ url_for('my_committees') }}">
+                        <i class="fas fa-users"></i><span>My Committees</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'resource_library' %}active{% endif %}" href="{{ url_for('resource_library') }}">
+                        <i class="fas fa-book-open"></i><span>Resources</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'assets_list' %}active{% endif %}" href="{{ url_for('assets_list') }}">
+                        <i class="fas fa-boxes"></i><span>Assets</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'service_schedule' %}active{% endif %}" href="{{ url_for('service_schedule') }}">
+                        <i class="fas fa-calendar-check"></i><span>Services</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'sermons_list' %}active{% endif %}" href="{{ url_for('sermons_list') }}">
+                        <i class="fas fa-bible"></i><span>Sermons</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">
+                        <i class="fas fa-praying-hands"></i><span>Prayer</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'volunteer_list' %}active{% endif %}" href="{{ url_for('volunteer_list') }}">
+                        <i class="fas fa-hands-helping"></i><span>Volunteer</span>
+                    </a>
+                    <a class="nav-link {% if request.endpoint == 'change_pin' %}active{% endif %}" href="{{ url_for('change_pin') }}">
+                        <i class="fas fa-key"></i><span>Change PIN</span>
+                    </a>
+                    <form method="post" action="{{ url_for('logout') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="nav-link logout" style="background:none; border:none; width:100%; text-align:left;">
+                            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                        </button>
+                    </form>
+                </nav>
+                
+                <!-- Sidebar User Profile Section -->
+                <div class="sidebar-profile">
+                    <div class="sidebar-profile-avatar">
+                        {% if member_photo and member_photo != '' %}
+                            <img src="{{ url_for('member_photo', filename=member_photo.split('\\')[-1].split('/')[-1]) }}" 
+                                 alt="{{ session.member_name }}" title="{{ session.member_name }}">
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="sidebar-profile-name">{{ session.member_name }}</div>
+                    <a href="{{ url_for('profile') }}" class="sidebar-profile-link">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Open profile</span>
+                    </a>
+                </div>
         </div>
 
-        <!-- Main content area -->
         <div class="main-content">
             <div class="top-bar">
                 <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
@@ -368,27 +673,38 @@
                     </div>
                 </div>
             </div>
+            <!-- Content block for logged-in pages -->
             {% block content %}{% endblock %}
         </div>
 
+        <!-- Mobile menu toggle -->
+        <button class="btn btn-primary d-lg-none" id="menuToggle" style="position:fixed; bottom:20px; right:20px; z-index:1100; border-radius:50%; width:60px; height:60px;">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <script>
+            document.getElementById('menuToggle')?.addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('show');
+            });
+        </script>
+
     {% else %}
-        <!-- Logged‑out layout (login page, etc.) -->
+        <!-- Logged-out layout (no sidebar) -->
         <div class="auth-container">
             <div class="container">
+                <!-- Content block for public pages (e.g., login) -->
                 {% block auth_content %}{% endblock %}
             </div>
         </div>
     {% endif %}
 
-    <!-- Bootstrap JS bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Service Worker for PWA -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js')
-                .then(reg => console.log('Service Worker registered', reg))
-                .catch(err => console.error('Service Worker registration failed', err));
-        }
-    </script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker registration failed', err));
+  }
+</script>
 </body>
 </html>

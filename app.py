@@ -73,7 +73,7 @@ def protect_against_csrf():
     if request.path == '/logout' or request.endpoint == 'logout':
         return
     if request.method == 'POST':
-        sent_token = request.form.get('csrf_token', '')
+        sent_token = request.form.get('csrf_token', '') or request.headers.get('X-CSRFToken', '') or request.headers.get('X-CSRF-Token', '')
         session_token = session.get('_csrf_token', '')
         if not sent_token or not session_token or not secrets.compare_digest(sent_token, session_token):
             abort(400, description="Invalid or missing CSRF token.")
